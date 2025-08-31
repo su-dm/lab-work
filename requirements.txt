@@ -2,3 +2,11 @@ torch
 transformers
 tensorboard
 datasets
+peft
+accelerate
+trl
+gcsfs
+google-cloud-storage
+google-cloud-aiplatform
+build
+pyyaml

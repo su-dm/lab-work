@@ -1,3 +1,5 @@
 */runs/*
 tokenizer_*.json
 weights/*
+.env
+.DS_Store

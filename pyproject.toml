@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "paper_implement"
+version = "0.1.0"
+description = "Training utilities for fine-tuning HF models on Vertex AI"
+authors = [{name = "Your Name"}]
+requires-python = ">=3.9"
+dependencies = [
+  "torch",
+  "transformers>=4.41.0",
+  "datasets>=2.14.0",
+  "peft>=0.11.1",
+  "accelerate>=0.30.0",
+  "trl>=0.9.4",
+  "bitsandbytes>=0.43.1; platform_system=='Linux' and platform_machine=='x86_64'",
+  "gcsfs>=2023.9.2",
+  "google-cloud-storage>=2.10.0",
+  "pyyaml>=6.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["paper_implement*", "training_exp*"]
