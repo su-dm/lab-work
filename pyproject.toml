@@ -8,4 +8,6 @@ dependencies = [
     "datasets>=4.0.0",
     "ipykernel>=6.30.1",
     "nbformat>=5.10.4",
+    "torch>=2.8.0",
+    "transformers>=4.56.0",
 ]

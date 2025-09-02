@@ -1,0 +1,7 @@
+Legal
+https://huggingface.co/datasets/pile-of-law/pile-of-law
+https://huggingface.co/datasets/lighteval/legal_summarization
+https://huggingface.co/datasets/opennyaiorg/InJudgements_dataset
+https://huggingface.co/datasets/Exploration-Lab/IL-TUR
+https://huggingface.co/datasets/coastalcph/lex_glue
+https://huggingface.co/datasets/joelniklaus/legal_case_document_summarization
