@@ -1,5 +1,5 @@
 [project]
-name = "paper-implement"
+name = "lab-work"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -8,6 +8,7 @@ dependencies = [
     "datasets>=4.0.0",
     "ipykernel>=6.30.1",
     "nbformat>=5.10.4",
+    "numpy>=2.3.2",
     "torch>=2.8.0",
     "transformers>=4.56.0",
 ]
