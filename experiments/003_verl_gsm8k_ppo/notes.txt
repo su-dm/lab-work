@@ -1,0 +1,103 @@
+## Overview
+Qwen2.5-0.5B-Instruct verl PPO training
+
+## Time
+Took about 6 hours on an A100
+
+## Result
+Worse in many cases than the base model
+
+Base
+```
+system
+You are Qwen, created by Alibaba Cloud. You are a helpful assistant.
+
+Bob sells newspapers for $2.50 each. If he sells 3 a day for 52 weeks how much money did he make?
+To calculate the total amount of money Bob made from selling newspapers, you can use the formula:
+
+Total Money Made = Number of Newspapers Sold × Price per Newspaper
+
+Given that:
+- Each newspaper costs $2.50
+- Bob sells 3 newspapers a day
+- He works for 52 weeks
+
+First, let's calculate the number of newspapers sold in one week:
+
+Number of Newspapers Sold Per Week = Number of Newspapers Sold Per Day × Days in a Week
+= 3 × 7 (since there are 7 days in a week)
+= 21 newspapers
+
+Now, let's calculate the total number of newspapers sold in 52 weeks:
+
+Total Newspapers Sold = Number of Newspapers Sold Per Week × Weeks
+= 21 × 52
+= 1,092 newspapers
+
+Finally, we'll calculate the total money made:
+
+Total Money Made = Total Newspapers Sold × Price per Newspaper
+= 1,092 × $2.50
+= $2,730
+
+So, Bob made $2,730 from selling newspapers over 52 weeks.<|endoftext|>
+```
+
+Post
+```
+system
+You are Qwen, created by Alibaba Cloud. You are a helpful assistant.
+
+Bob sells newspapers for $2.50 each. If he sells 3 a day for 52 weeks how much money did he make?
+To calculate Bob's total earnings, we need to follow these steps:
+
+1. Calculate the daily earnings: Bob sells each newspaper for $2.50 and sells 3 newspapers a day.
+   Daily earnings = $2.50 * 3 = $7.50
+
+2. Calculate the weekly earnings: There are 52 weeks in a year.
+   Weekly earnings = $7.50 * 52 = $390
+
+3. Calculate the annual earnings: Bob earns an annual salary of $390.
+   Annual earnings = $390
+
+Therefore, Bob made a total of $390 in 52 weeks.<|endoftext|>
+```
+
+## Output
+
+Training Progress:  99%|█████████▉| 288/290 [3:56:06<01:27, 43.98s/it]
+(TaskRunner pid=3772) step:289 - global_seqlen/min:65192 - global_seqlen/max:65192 - global_seqlen/minmax_diff:0 - global_seqlen/balanced_min:65192 - global_seqlen/balanced_max:65192 - global_seqlen/mean:65192.0 - actor/entropy:0.05991644784808159 - critic/vf_loss:0.0053090164310560795 - critic/vf_clipfrac:0.0 - critic/vpred_mean:0.44395570119377226 - critic/grad_norm:30.334752559661865 - perf/mfu/critic:0.05465479425525521 - critic/lr:1e-05 - actor/pg_loss:-0.0014072708329422312 - actor/pg_clipfrac:0.005349935265257955 - actor/ppo_kl:0.0003823282124386651 - actor/pg_clipfrac_lower:2.363842577324249e-05 - actor/grad_norm:4.9063544273376465 - perf/mfu/actor:0.049854428436557914 - perf/max_memory_allocated_gb:26.567214965820312 - perf/max_memory_reserved_gb:32.099609375 - perf/cpu_memory_used_gb:10.914234161376953 - actor/lr:1e-06 - training/global_step:289 - training/epoch:9 - critic/score/mean:0.68359375 - critic/score/max:1.0 - critic/score/min:0.0 - critic/rewards/mean:0.68359375 - critic/rewards/max:1.0 - critic/rewards/min:0.0 - critic/advantages/mean:5.141378167650146e-08 - critic/advantages/max:2.6512722969055176 - critic/advantages/min:-2.565155506134033 - critic/returns/mean:0.6152603030204773 - critic/returns/max:1.0 - critic/returns/min:0.0 - critic/values/mean:0.466796875 - critic/values/max:0.875 - critic/values/min:-0.30859375 - critic/vf_explained_var:0.4361864924430847 - response_length/mean:152.3046875 - response_length/max:256.0 - response_length/min:70.0 - response_length/clip_ratio:0.046875 - response_length_non_aborted/mean:152.3046875 - response_length_non_aborted/max:256.0 - response_length_non_aborted/min:70.0 - response_length_non_aborted/clip_ratio:0.046875 - response/aborted_ratio:0.0 - prompt_length/mean:102.3515625 - prompt_length/max:182.0 - prompt_length/min:66.0 - prompt_length/clip_ratio:0.0 - timing_s/start_profile:8.232300024246797e-05 - timing_s/generate_sequences:3.1462502479553223 - timing_s/generation_timing/max:3.1462502479553223 - timing_s/generation_timing/min:3.1462502479553223 - timing_s/generation_timing/topk_ratio:0.0 - timing_s/gen:6.139456188000622 - timing_s/reward:0.056711204000748694 - timing_s/old_log_prob:2.6432807509991108 - timing_s/values:3.326362326999515 - timing_s/adv:0.024905740001486265 - timing_s/update_critic:14.732278537001548 - timing_s/update_actor:16.149595520999355 - timing_s/step:43.08673816400005 - timing_s/stop_profile:7.368200022028759e-05 - timing_per_token_ms/adv:0.0003820367529986235 - timing_per_token_ms/update_actor:0.2477235783685016 - timing_per_token_ms/update_critic:0.22598292025097477 - timing_per_token_ms/gen:0.15746232849450173 - timing_per_token_ms/values:0.05102408772548035 - perf/total_num_tokens:65192 - perf/time_per_step:43.08673816400005 - perf/throughput:1513.040967544612
+Training Progress: 100%|█████████▉| 289/290 [3:56:49<00:43, 43.71s/it]
+(TaskRunner pid=3772) test_gen_batch meta info: {'eos_token_id': 151645, 'pad_token_id': 151643, 'recompute_log_prob': False, 'do_sample': False, 'validate': True, 'global_steps': 290}
+(TaskRunner pid=3772) validation generation end
+(TaskRunner pid=3772) [prompt] system
+(TaskRunner pid=3772) You are Qwen, created by Alibaba Cloud. You are a helpful assistant.
+(TaskRunner pid=3772) user
+(TaskRunner pid=3772) Janet’s ducks lay 16 eggs per day. She eats three for breakfast every morning and bakes muffins for her friends every day with four. She sells the remainder at the farmers' market daily for $2 per fresh duck egg. How much in dollars does she make every day at the farmers' market? Let's think step by step and output the final answer after "####".
+(TaskRunner pid=3772) assistant
+(TaskRunner pid=3772)
+(TaskRunner pid=3772) [response] Let's break this down step by step:
+(TaskRunner pid=3772)
+(TaskRunner pid=3772) 1. Janet's ducks lay 16 eggs per day.
+(TaskRunner pid=3772) 2. She eats 3 eggs per morning, so she eats 3 * 7 = 21 eggs per day.
+(TaskRunner pid=3772) 3. She bakes 4 eggs per day.
+(TaskRunner pid=3772) 4. The total number of eggs she lays and bakes per day is 21 + 4 = 25 eggs.
+(TaskRunner pid=3772) 5. She sells each egg for $2, so she sells 25 * 2 = 50 dollars per day at the farmers' market.
+(TaskRunner pid=3772) #### 50
+(TaskRunner pid=3772) ####
+(TaskRunner pid=3772) [ground_truth] 18
+(TaskRunner pid=3772) [score] 0.0
+(TaskRunner pid=3772) len reward_extra_infos_dict['reward']: 1319
+(TaskRunner pid=3772) local_global_step_folder: checkpoints/verl_examples/gsm8k/global_step_290
+(WorkerDict pid=4373) INFO:2025-10-03 17:01:32,609:[Rank 0] Saved model to /workspace/verl/verl/checkpoints/verl_examples/gsm8k/global_step_290/actor/model_world_size_1_rank_0.pt
+(WorkerDict pid=4373) INFO:2025-10-03 17:01:45,331:[Rank 0] Saved optim to /workspace/verl/verl/checkpoints/verl_examples/gsm8k/global_step_290/actor/optim_world_size_1_rank_0.pt
+(WorkerDict pid=4373) INFO:2025-10-03 17:01:45,339:[Rank 0] Saved extra_state to /workspace/verl/verl/checkpoints/verl_examples/gsm8k/global_step_290/actor/extra_state_world_size_1_rank_0.pt
+(WorkerDict pid=4373) INFO:2025-10-03 17:01:45,692:[Rank 0] Saved model config and tokenizer class to /workspace/verl/verl/checkpoints/verl_examples/gsm8k/global_step_290/actor/huggingface
+(WorkerDict pid=4373) INFO:2025-10-03 17:01:51,544:[Rank 0] Saved model to /workspace/verl/verl/checkpoints/verl_examples/gsm8k/global_step_290/critic/model_world_size_1_rank_0.pt
+(WorkerDict pid=4373) INFO:2025-10-03 17:02:04,846:[Rank 0] Saved optim to /workspace/verl/verl/checkpoints/verl_examples/gsm8k/global_step_290/critic/optim_world_size_1_rank_0.pt
+(WorkerDict pid=4373) INFO:2025-10-03 17:02:04,853:[Rank 0] Saved extra_state to /workspace/verl/verl/checkpoints/verl_examples/gsm8k/global_step_290/critic/extra_state_world_size_1_rank_0.pt
+(TaskRunner pid=3772) step:290 - global_seqlen/min:65256 - global_seqlen/max:65256 - global_seqlen/minmax_diff:0 - global_seqlen/balanced_min:65256 - global_seqlen/balanced_max:65256 - global_seqlen/mean:65256.0 - actor/entropy:0.06294690817594528 - critic/vf_loss:0.006071027207326551 - critic/vf_clipfrac:0.0 - critic/vpred_mean:0.7656127084046602 - critic/grad_norm:27.504578113555908 - perf/mfu/critic:0.05598848916758407 - critic/lr:1e-05 - actor/pg_loss:-0.0007808470472809859 - actor/pg_clipfrac:0.004749768886540551 - actor/ppo_kl:-0.00030024044991705523 - actor/pg_clipfrac_lower:5.831218550156336e-05 - actor/grad_norm:4.962467312812805 - perf/mfu/actor:0.0509201932134984 - perf/max_memory_allocated_gb:26.567214965820312 - perf/max_memory_reserved_gb:32.099609375 - perf/cpu_memory_used_gb:10.921871185302734 - actor/lr:1e-06 - val-core/openai/gsm8k/reward/mean@1:0.5049279757391963 - training/global_step:290 - training/epoch:9 - critic/score/mean:0.66796875 - critic/score/max:1.0 - critic/score/min:0.0 - critic/rewards/mean:0.66796875 - critic/rewards/max:1.0 - critic/rewards/min:0.0 - critic/advantages/mean:9.455241034572737e-09 - critic/advantages/max:2.513169527053833 - critic/advantages/min:-2.5955393314361572 - critic/returns/mean:0.6058454513549805 - critic/returns/max:1.0 - critic/returns/min:0.0 - critic/values/mean:0.56640625 - critic/values/max:1.078125 - critic/values/min:-0.2392578125 - critic/vf_explained_var:0.3418309688568115 - response_length/mean:151.29296875 - response_length/max:256.0 - response_length/min:61.0 - response_length/clip_ratio:0.05078125 - response_length_non_aborted/mean:151.29296875 - response_length_non_aborted/max:256.0 - response_length_non_aborted/min:61.0 - response_length_non_aborted/clip_ratio:0.05078125 - response/aborted_ratio:0.0 - prompt_length/mean:103.61328125 - prompt_length/max:183.0 - prompt_length/min:63.0 - prompt_length/clip_ratio:0.0 - timing_s/start_profile:5.481100015458651e-05 - timing_s/generate_sequences:3.1441686153411865 - timing_s/generation_timing/max:3.1441686153411865 - timing_s/generation_timing/min:3.1441686153411865 - timing_s/generation_timing/topk_ratio:0.0 - timing_s/gen:6.130889215000934 - timing_s/reward:0.05666681100046844 - timing_s/old_log_prob:2.6561611400011316 - timing_s/values:3.3380587750016275 - timing_s/adv:0.02440466000007291 - timing_s/update_critic:14.402647777000311 - timing_s/update_actor:15.8405328129993 - timing_s/step:42.463638221999645 - timing_s/testing:21.216406747998917 - timing_s/save_checkpoint:38.97357104599905 - timing_s/stop_profile:0.00012301199967623688 - timing_per_token_ms/adv:0.00037398338850179154 - timing_per_token_ms/update_actor:0.2427444650759976 - timing_per_token_ms/update_critic:0.22070993896347174 - timing_per_token_ms/gen:0.15829411104802185 - timing_per_token_ms/values:0.05115328513855626 - perf/total_num_tokens:65256 - perf/time_per_step:42.463638221999645 - perf/throughput:1536.750093311412
+(TaskRunner pid=3772) ("Final validation metrics: {'val-core/openai/gsm8k/reward/mean@1': "
+(TaskRunner pid=3772)  '0.5049279757391963}')
+Training Progress: 100%|██████████| 290/290 [3:58:32<00:00, 49.35s/it]
+(WorkerDict pid=4373) INFO:2025-10-03 17:02:05,170:[Rank 0] Saved model config and tokenizer class to /workspace/verl/verl/checkpoints/verl_examples/gsm8k/global_step_290/critic/huggingface
