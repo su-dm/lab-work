@@ -11,6 +11,7 @@ dependencies = [
     "nbformat>=5.10.4",
     "numpy>=2.3.2",
     "ray[rllib]>=2.49.2",
+    "tensorboard>=2.20.0",
     "torch>=2.8.0",
     "transformers>=4.56.0",
 ]
