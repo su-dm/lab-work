@@ -27,6 +27,8 @@ config = (
         evaluation_duration=10,
     )
 )
+
+run `tensorboard --logdir ~/ray_results/PPO_2025-10-13_12-15-26/` and you can track progress at localhost:6006
 ```
 
 
@@ -54,8 +56,8 @@ Total Steps Trained: 1011181
 
 Using ray.tune sweep for different minibatch sizes to see how it affects convergence.
 
-This test was with 4000 batch size larger than last.
 
+This test was with 4000 batch size larger than last.
 
 Trial PPO_CartPole-v1_d4590_00000 finished iteration 150 at 2025-10-13 12:22:19. Total running time: 6min 53s
 ╭─────────────────────────────────────────────────────╮
