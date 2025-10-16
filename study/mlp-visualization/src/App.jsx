@@ -214,8 +214,8 @@ export default function MLPFeedForwardDetailed() {
   }, [animationStep]);
   
   // Layout
-  const layerX = { input: 120, hidden: 450, output: 780 };
-  const getNodeY = (idx, total) => 120 + (idx * 450 / (total + 1));
+  const layerX = { input: 150, hidden: 475, output: 800 };
+  const getNodeY = (idx, total) => 100 + ((idx + 1) * 400 / (total + 1));
   
   const isWeightHighlighted = (from, fromIdx, to, toIdx) => {
     return highlightedWeights.some(w => 
@@ -224,12 +224,64 @@ export default function MLPFeedForwardDetailed() {
   };
   
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex flex-col items-center justify-center p-8">
-      <h1 className="text-4xl font-bold text-white mb-2">Multi-Layer Perceptron: Feed Forward Algorithm</h1>
-      <p className="text-slate-300 mb-6">Detailed view of weights, biases, and computations</p>
-      
-      <div className="bg-slate-800 rounded-lg shadow-2xl p-8 mb-6">
-        <svg width="950" height="600" className="overflow-visible">
+    <div className="w-full min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 flex flex-col items-center py-8 px-4">
+      <div className="w-full max-w-7xl space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-2 mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
+            Multi-Layer Perceptron
+          </h1>
+          <p className="text-lg text-slate-400">Feed Forward Algorithm Visualization</p>
+        </div>
+
+        {/* Network Visualization */}
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-700/50 p-8 overflow-auto">
+          <svg width="950" height="600" className="mx-auto">
+            {/* Gradients and Filters */}
+            <defs>
+              {/* Input neurons gradient */}
+              <linearGradient id="inputGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#1e3a8a" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#1e293b" stopOpacity="0.95" />
+              </linearGradient>
+
+              {/* Hidden neurons gradient */}
+              <linearGradient id="hiddenGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#581c87" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#1e293b" stopOpacity="0.95" />
+              </linearGradient>
+
+              {/* Output neurons gradient */}
+              <linearGradient id="outputGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#065f46" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#1e293b" stopOpacity="0.95" />
+              </linearGradient>
+
+              {/* Active neuron gradient */}
+              <linearGradient id="activeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#1e40af" stopOpacity="1" />
+                <stop offset="100%" stopColor="#1e3a8a" stopOpacity="1" />
+              </linearGradient>
+
+              {/* Glow filter */}
+              <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+
+              {/* Active glow filter */}
+              <filter id="activeGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+
           {/* Draw all NON-highlighted connections first (Input -> Hidden) */}
           {inputs.map((_, i) => 
             Array(4).fill(0).map((_, j) => {
@@ -261,22 +313,23 @@ export default function MLPFeedForwardDetailed() {
                   {isVisible && (
                     <g>
                       <rect
-                        x={midX - 22}
-                        y={midY - 10}
-                        width="44"
-                        height="20"
-                        fill="#1e293b"
+                        x={midX - 20}
+                        y={midY - 9}
+                        width="40"
+                        height="18"
+                        fill="#0f172a"
                         stroke="#334155"
-                        strokeWidth="1.5"
-                        rx="3"
-                        opacity={0.7}
+                        strokeWidth="1"
+                        rx="4"
+                        opacity={0.85}
                       />
                       <text
                         x={midX}
-                        y={midY + 5}
-                        fill="#94a3b8"
-                        fontSize="11"
+                        y={midY + 4}
+                        fill="#cbd5e1"
+                        fontSize="10"
                         textAnchor="middle"
+                        fontWeight="500"
                       >
                         {weight.toFixed(2)}
                       </text>
@@ -318,22 +371,23 @@ export default function MLPFeedForwardDetailed() {
                   {isVisible && (
                     <g>
                       <rect
-                        x={midX - 22}
-                        y={midY - 10}
-                        width="44"
-                        height="20"
-                        fill="#1e293b"
+                        x={midX - 20}
+                        y={midY - 9}
+                        width="40"
+                        height="18"
+                        fill="#0f172a"
                         stroke="#334155"
-                        strokeWidth="1.5"
-                        rx="3"
-                        opacity={0.7}
+                        strokeWidth="1"
+                        rx="4"
+                        opacity={0.85}
                       />
                       <text
                         x={midX}
-                        y={midY + 5}
-                        fill="#94a3b8"
-                        fontSize="11"
+                        y={midY + 4}
+                        fill="#cbd5e1"
+                        fontSize="10"
                         textAnchor="middle"
+                        fontWeight="500"
                       >
                         {weight.toFixed(2)}
                       </text>
@@ -345,28 +399,29 @@ export default function MLPFeedForwardDetailed() {
           )}
           
           {/* Input Layer */}
-          <text x={layerX.input} y="40" fill="#94a3b8" fontSize="16" fontWeight="bold" textAnchor="middle">Input Layer</text>
+          <text x={layerX.input} y="50" fill="#cbd5e1" fontSize="15" fontWeight="600" textAnchor="middle">Input Layer</text>
           {inputs.map((val, i) => (
             <g key={`input-${i}`}>
               <circle
                 cx={layerX.input}
                 cy={getNodeY(i, 3)}
-                r="30"
-                fill="#1e293b"
+                r="32"
+                fill="url(#inputGradient)"
                 stroke="#3b82f6"
-                strokeWidth="3"
+                strokeWidth="2.5"
+                filter="url(#glow)"
               />
-              <text x={layerX.input} y={getNodeY(i, 3) - 5} fill="#60a5fa" fontSize="12" textAnchor="middle">
+              <text x={layerX.input} y={getNodeY(i, 3) - 6} fill="#93c5fd" fontSize="11" textAnchor="middle" fontWeight="600">
                 {inputLabels[i]}
               </text>
-              <text x={layerX.input} y={getNodeY(i, 3) + 10} fill="#60a5fa" fontSize="18" fontWeight="bold" textAnchor="middle">
+              <text x={layerX.input} y={getNodeY(i, 3) + 10} fill="#dbeafe" fontSize="17" fontWeight="bold" textAnchor="middle">
                 {val.toFixed(1)}
               </text>
             </g>
           ))}
           
           {/* Hidden Layer */}
-          <text x={layerX.hidden} y="40" fill="#94a3b8" fontSize="16" fontWeight="bold" textAnchor="middle">Hidden Layer (ReLU/Sigmoid)</text>
+          <text x={layerX.hidden} y="50" fill="#cbd5e1" fontSize="15" fontWeight="600" textAnchor="middle">Hidden Layer (Sigmoid)</text>
           {Array(4).fill(0).map((_, i) => {
             const isActive = activeNeuron?.layer === 'hidden' && activeNeuron?.index === i;
             const showValue = animationStep > i * 2 + 1;
@@ -375,27 +430,28 @@ export default function MLPFeedForwardDetailed() {
                 <circle
                   cx={layerX.hidden}
                   cy={getNodeY(i, 4)}
-                  r="30"
-                  fill={isActive ? "#1e40af" : "#1e293b"}
-                  stroke={isActive ? "#60a5fa" : "#8b5cf6"}
-                  strokeWidth={isActive ? "4" : "3"}
+                  r="32"
+                  fill={isActive ? "url(#activeGradient)" : "url(#hiddenGradient)"}
+                  stroke={isActive ? "#60a5fa" : "#a78bfa"}
+                  strokeWidth={isActive ? "3" : "2.5"}
+                  filter={isActive ? "url(#activeGlow)" : "url(#glow)"}
                   className="transition-all duration-300"
                 />
                 {/* Bias label */}
                 <text
-                  x={layerX.hidden - 50}
+                  x={layerX.hidden - 55}
                   y={getNodeY(i, 4) + 4}
-                  fill="#a78bfa"
+                  fill="#c4b5fd"
                   fontSize="11"
-                  fontWeight="bold"
+                  fontWeight="600"
                 >
                   b={biasHidden[i].toFixed(2)}
                 </text>
-                <text x={layerX.hidden} y={getNodeY(i, 4) - 5} fill="#a78bfa" fontSize="12" textAnchor="middle">
+                <text x={layerX.hidden} y={getNodeY(i, 4) - 6} fill="#c4b5fd" fontSize="11" textAnchor="middle" fontWeight="600">
                   h{i+1}
                 </text>
                 {showValue && (
-                  <text x={layerX.hidden} y={getNodeY(i, 4) + 10} fill="#a78bfa" fontSize="16" fontWeight="bold" textAnchor="middle">
+                  <text x={layerX.hidden} y={getNodeY(i, 4) + 10} fill="#e9d5ff" fontSize="16" fontWeight="bold" textAnchor="middle">
                     {hidden[i].toFixed(2)}
                   </text>
                 )}
@@ -404,7 +460,7 @@ export default function MLPFeedForwardDetailed() {
           })}
           
           {/* Output Layer */}
-          <text x={layerX.output} y="40" fill="#94a3b8" fontSize="16" fontWeight="bold" textAnchor="middle">Output Layer</text>
+          <text x={layerX.output} y="50" fill="#cbd5e1" fontSize="15" fontWeight="600" textAnchor="middle">Output Layer</text>
           {Array(2).fill(0).map((_, i) => {
             const isActive = activeNeuron?.layer === 'output' && activeNeuron?.index === i;
             const showValue = animationStep > 8 + i * 2 + 1;
@@ -413,27 +469,28 @@ export default function MLPFeedForwardDetailed() {
                 <circle
                   cx={layerX.output}
                   cy={getNodeY(i, 2)}
-                  r="30"
-                  fill={isActive ? "#1e40af" : "#1e293b"}
-                  stroke={isActive ? "#60a5fa" : "#10b981"}
-                  strokeWidth={isActive ? "4" : "3"}
+                  r="32"
+                  fill={isActive ? "url(#activeGradient)" : "url(#outputGradient)"}
+                  stroke={isActive ? "#60a5fa" : "#34d399"}
+                  strokeWidth={isActive ? "3" : "2.5"}
+                  filter={isActive ? "url(#activeGlow)" : "url(#glow)"}
                   className="transition-all duration-300"
                 />
                 {/* Bias label */}
                 <text
-                  x={layerX.output - 50}
+                  x={layerX.output - 55}
                   y={getNodeY(i, 2) + 4}
-                  fill="#34d399"
+                  fill="#6ee7b7"
                   fontSize="11"
-                  fontWeight="bold"
+                  fontWeight="600"
                 >
                   b={biasOutput[i].toFixed(2)}
                 </text>
-                <text x={layerX.output} y={getNodeY(i, 2) - 5} fill="#34d399" fontSize="12" textAnchor="middle">
+                <text x={layerX.output} y={getNodeY(i, 2) - 6} fill="#6ee7b7" fontSize="11" textAnchor="middle" fontWeight="600">
                   y{i+1}
                 </text>
                 {showValue && (
-                  <text x={layerX.output} y={getNodeY(i, 2) + 10} fill="#34d399" fontSize="18" fontWeight="bold" textAnchor="middle">
+                  <text x={layerX.output} y={getNodeY(i, 2) + 10} fill="#d1fae5" fontSize="17" fontWeight="bold" textAnchor="middle">
                     {output[i].toFixed(2)}
                   </text>
                 )}
@@ -475,13 +532,13 @@ export default function MLPFeedForwardDetailed() {
                     height="20"
                     fill="#1e40af"
                     stroke="#60a5fa"
-                    strokeWidth="2"
-                    rx="3"
+                    strokeWidth="1.5"
+                    rx="5"
                   />
                   <text
                     x={midX}
-                    y={midY + 5}
-                    fill="#60a5fa"
+                    y={midY + 4}
+                    fill="#dbeafe"
                     fontSize="11"
                     fontWeight="bold"
                     textAnchor="middle"
@@ -527,13 +584,13 @@ export default function MLPFeedForwardDetailed() {
                     height="20"
                     fill="#1e40af"
                     stroke="#60a5fa"
-                    strokeWidth="2"
-                    rx="3"
+                    strokeWidth="1.5"
+                    rx="5"
                   />
                   <text
                     x={midX}
-                    y={midY + 5}
-                    fill="#60a5fa"
+                    y={midY + 4}
+                    fill="#dbeafe"
                     fontSize="11"
                     fontWeight="bold"
                     textAnchor="middle"
@@ -544,148 +601,212 @@ export default function MLPFeedForwardDetailed() {
               );
             })
           )}
-        </svg>
-      </div>
-      
-      {/* Computation Display */}
-      <div className="bg-slate-700 rounded-lg p-6 w-full max-w-5xl min-h-48 text-white mb-6">
-        {computation?.type === 'weighted_sum' && (
-          <div>
-            <h3 className="text-2xl font-bold text-blue-400 mb-4">
-              Step {animationStep + 1}: Computing {computation.layer === 'hidden' ? 'Hidden' : 'Output'} Neuron {computation.neuron + 1}
-            </h3>
-            <div className="bg-slate-800 rounded p-4 mb-3">
-              <p className="text-lg font-semibold text-yellow-300 mb-2">Weighted Sum Formula:</p>
-              <p className="text-2xl font-mono text-green-400">z = b + Σ(xᵢ × wᵢ)</p>
-            </div>
-            <div className="bg-slate-800 rounded p-4">
-              <p className="text-lg font-semibold text-yellow-300 mb-3">Calculation:</p>
-              {computation.terms.map((term, idx) => (
-                <p key={idx} className="font-mono text-base text-slate-200 mb-1 ml-4">
-                  {idx === 0 ? '• ' : '+ '}{term}
-                </p>
-              ))}
-              <div className="border-t border-slate-600 mt-3 pt-3">
-                <p className="font-mono text-xl text-yellow-400">
-                  <strong>z = {computation.total.toFixed(4)}</strong>
-                </p>
+          </svg>
+        </div>
+
+        {/* Computation Display */}
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-700/50 overflow-hidden">
+          {computation?.type === 'weighted_sum' && (
+            <div className="p-8">
+              {/* Step Header */}
+              <div className="mb-6">
+                <div className="inline-block px-4 py-1.5 bg-blue-500/20 border border-blue-500/30 rounded-full mb-3">
+                  <span className="text-blue-300 text-sm font-semibold">Step {animationStep + 1} of {MAX_STEPS}</span>
+                </div>
+                <h3 className="text-2xl font-bold text-white">
+                  Computing {computation.layer === 'hidden' ? 'Hidden' : 'Output'} Neuron {computation.neuron + 1}
+                </h3>
               </div>
-            </div>
-          </div>
-        )}
-        
-        {computation?.type === 'activation' && (
-          <div>
-            <h3 className="text-2xl font-bold text-purple-400 mb-4">
-              Step {animationStep + 1}: Applying Activation Function
-            </h3>
-            <div className="bg-slate-800 rounded p-4 mb-3">
-              <p className="text-lg font-semibold text-yellow-300 mb-2">Sigmoid Function:</p>
-              <p className="text-2xl font-mono text-green-400">σ(z) = 1 / (1 + e^(-z))</p>
-            </div>
-            <div className="bg-slate-800 rounded p-4">
-              <p className="text-lg font-semibold text-yellow-300 mb-3">Calculation:</p>
-              <p className="font-mono text-lg text-slate-200 ml-4 mb-2">
-                σ({computation.input.toFixed(4)}) = 1 / (1 + e^(-{computation.input.toFixed(4)}))
-              </p>
-              <div className="border-t border-slate-600 mt-3 pt-3">
-                <p className="font-mono text-xl text-purple-400">
-                  <strong>a = {computation.output.toFixed(4)}</strong>
-                </p>
+
+              {/* Formula Section */}
+              <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 rounded-xl p-6 mb-4 border border-slate-700/30">
+                <p className="text-sm font-semibold text-emerald-400 mb-3 uppercase tracking-wide">Weighted Sum Formula</p>
+                <p className="text-2xl font-mono text-white">z = b + Σ(xᵢ × wᵢ)</p>
               </div>
-            </div>
-          </div>
-        )}
-        
-        {computation?.type === 'complete' && (
-          <div>
-            <h3 className="text-2xl font-bold text-green-400 mb-4">✓ Feed Forward Complete!</h3>
-            <div className="bg-slate-800 rounded p-4">
-              <p className="text-lg text-slate-300 mb-3">Final Predictions:</p>
-              <div className="flex gap-6">
-                {computation.outputs.map((val, i) => (
-                  <div key={i} className="bg-slate-600 rounded px-6 py-4">
-                    <span className="text-slate-300 text-lg">y{i + 1} = </span>
-                    <span className="font-bold text-green-400 text-2xl">{val.toFixed(4)}</span>
+
+              {/* Calculation Section */}
+              <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 rounded-xl p-6 border border-slate-700/30">
+                <p className="text-sm font-semibold text-amber-400 mb-4 uppercase tracking-wide">Step-by-Step Calculation</p>
+                <div className="space-y-2 mb-4">
+                  {computation.terms.map((term, idx) => (
+                    <div key={idx} className="flex items-center font-mono text-sm text-slate-300">
+                      <span className="text-slate-500 mr-3">{idx === 0 ? '=' : '+'}</span>
+                      <span>{term}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t border-slate-600/50 pt-4 mt-4">
+                  <div className="inline-flex items-center gap-3 bg-amber-500/10 px-4 py-2.5 rounded-lg border border-amber-500/20">
+                    <span className="text-slate-400 text-sm">Result:</span>
+                    <span className="font-mono text-xl font-bold text-amber-400">z = {computation.total.toFixed(4)}</span>
                   </div>
-                ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-        
-        {!computation && (
-          <div className="text-slate-300 text-center py-8">
-            <p className="text-xl mb-2">Ready to visualize the feed forward algorithm!</p>
-            <p className="text-slate-400">Press Play to see each computation step by step</p>
-          </div>
-        )}
-      </div>
-      
-      {/* Legend */}
-      <div className="bg-slate-700 rounded-lg p-4 w-full max-w-5xl mb-6">
-        <h4 className="text-lg font-bold text-white mb-3">Legend:</h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-12 h-6 bg-slate-800 border border-blue-400 rounded flex items-center justify-center text-blue-400 text-xs">0.25</div>
-            <span className="text-slate-300">Weight (w)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-purple-400 font-bold">b=0.1</span>
-            <span className="text-slate-300">Bias</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full border-2 border-blue-500 bg-slate-800"></div>
-            <span className="text-slate-300">Neuron</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-12 h-0.5 bg-blue-500"></div>
-            <span className="text-slate-300">Connection</span>
+          )}
+
+          {computation?.type === 'activation' && (
+            <div className="p-8">
+              {/* Step Header */}
+              <div className="mb-6">
+                <div className="inline-block px-4 py-1.5 bg-purple-500/20 border border-purple-500/30 rounded-full mb-3">
+                  <span className="text-purple-300 text-sm font-semibold">Step {animationStep + 1} of {MAX_STEPS}</span>
+                </div>
+                <h3 className="text-2xl font-bold text-white">
+                  Applying Activation Function
+                </h3>
+              </div>
+
+              {/* Formula Section */}
+              <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 rounded-xl p-6 mb-4 border border-slate-700/30">
+                <p className="text-sm font-semibold text-emerald-400 mb-3 uppercase tracking-wide">Sigmoid Function</p>
+                <p className="text-2xl font-mono text-white">σ(z) = 1 / (1 + e^(-z))</p>
+              </div>
+
+              {/* Calculation Section */}
+              <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 rounded-xl p-6 border border-slate-700/30">
+                <p className="text-sm font-semibold text-amber-400 mb-4 uppercase tracking-wide">Calculation</p>
+                <div className="font-mono text-sm text-slate-300 mb-4">
+                  σ({computation.input.toFixed(4)}) = 1 / (1 + e^(-{computation.input.toFixed(4)}))
+                </div>
+                <div className="border-t border-slate-600/50 pt-4 mt-4">
+                  <div className="inline-flex items-center gap-3 bg-purple-500/10 px-4 py-2.5 rounded-lg border border-purple-500/20">
+                    <span className="text-slate-400 text-sm">Activation:</span>
+                    <span className="font-mono text-xl font-bold text-purple-400">a = {computation.output.toFixed(4)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {computation?.type === 'complete' && (
+            <div className="p-8">
+              {/* Completion Header */}
+              <div className="mb-6 text-center">
+                <div className="inline-flex items-center gap-3 px-5 py-2 bg-emerald-500/20 border border-emerald-500/30 rounded-full mb-4">
+                  <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-emerald-300 font-semibold">Complete</span>
+                </div>
+                <h3 className="text-2xl font-bold text-white">Feed Forward Complete</h3>
+              </div>
+
+              {/* Results */}
+              <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 rounded-xl p-6 border border-slate-700/30">
+                <p className="text-sm font-semibold text-emerald-400 mb-4 uppercase tracking-wide">Final Output Predictions</p>
+                <div className="flex flex-wrap justify-center gap-4">
+                  {computation.outputs.map((val, i) => (
+                    <div key={i} className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 border border-emerald-500/20 rounded-xl px-6 py-4 min-w-[180px]">
+                      <div className="text-center">
+                        <div className="text-slate-400 text-sm mb-1">Output {i + 1}</div>
+                        <div className="font-mono text-2xl font-bold text-emerald-400">y{i + 1} = {val.toFixed(4)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!computation && (
+            <div className="p-12 text-center">
+              <div className="max-w-md mx-auto space-y-3">
+                <div className="w-16 h-16 mx-auto bg-blue-500/20 rounded-full flex items-center justify-center mb-4">
+                  <Play size={32} className="text-blue-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-white">Ready to Begin</h3>
+                <p className="text-slate-400">Press <span className="text-blue-400 font-semibold">Play</span> to visualize each step of the feed forward algorithm</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Legend */}
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-700/50 p-6">
+          <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-5">Legend</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-7 bg-slate-900/50 border border-blue-400/40 rounded-lg flex items-center justify-center text-blue-400 text-xs font-semibold shadow-sm">0.25</div>
+              <span className="text-slate-300 text-sm">Weight (w)</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-purple-400 font-bold text-sm px-2">b=0.1</span>
+              <span className="text-slate-300 text-sm">Bias</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full border-2 border-blue-500 bg-slate-900/50 shadow-sm"></div>
+              <span className="text-slate-300 text-sm">Neuron</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-1 bg-blue-500 rounded-full shadow-sm"></div>
+              <span className="text-slate-300 text-sm">Connection</span>
+            </div>
           </div>
         </div>
-      </div>
-      
-      {/* Controls */}
-      <div className="flex gap-4 mb-4">
-        <button
-          onClick={handlePrevStep}
-          disabled={animationStep === 0}
-          className="flex items-center gap-2 bg-slate-600 hover:bg-slate-700 text-white px-6 py-4 rounded-lg font-semibold transition-colors text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <ChevronLeft size={24} />
-          Previous
-        </button>
-        <button
-          onClick={handlePlayPause}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold transition-colors text-lg"
-        >
-          {isPlaying ? <Pause size={24} /> : <Play size={24} />}
-          {isPlaying ? 'Pause' : animationStep >= MAX_STEPS ? 'Replay' : 'Play'}
-        </button>
-        <button
-          onClick={handleNextStep}
-          disabled={animationStep >= MAX_STEPS}
-          className="flex items-center gap-2 bg-slate-600 hover:bg-slate-700 text-white px-6 py-4 rounded-lg font-semibold transition-colors text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Next
-          <ChevronRight size={24} />
-        </button>
-        <button
-          onClick={handleReset}
-          className="flex items-center gap-2 bg-slate-600 hover:bg-slate-700 text-white px-6 py-4 rounded-lg font-semibold transition-colors text-lg"
-        >
-          <RotateCcw size={24} />
-          Reset
-        </button>
-      </div>
-      
-      <div className="text-slate-400 text-sm mb-4">
-        Step {animationStep} of {MAX_STEPS}
-      </div>
-      
-      <div className="text-slate-400 text-sm text-center max-w-3xl">
-        <p className="font-semibold mb-1">Each line shows the weight (w) that multiplies the input.</p>
-        <p>Each neuron has a bias (b) shown to its left. The computation is: z = b + Σ(input × weight), then a = σ(z)</p>
+
+        {/* Controls */}
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-700/50 p-6">
+          <div className="flex flex-col items-center gap-4">
+            {/* Button Group */}
+            <div className="flex flex-wrap justify-center gap-3">
+              <button
+                onClick={handlePrevStep}
+                disabled={animationStep === 0}
+                className="group flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-slate-700 border border-slate-600 hover:border-slate-500"
+              >
+                <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
+                <span>Previous</span>
+              </button>
+
+              <button
+                onClick={handlePlayPause}
+                className="group flex items-center gap-2 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white px-8 py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-blue-500/25 border border-blue-500/50"
+              >
+                {isPlaying ? <Pause size={20} className="group-hover:scale-110 transition-transform" /> : <Play size={20} className="group-hover:scale-110 transition-transform" />}
+                <span>{isPlaying ? 'Pause' : animationStep >= MAX_STEPS ? 'Replay' : 'Play'}</span>
+              </button>
+
+              <button
+                onClick={handleNextStep}
+                disabled={animationStep >= MAX_STEPS}
+                className="group flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-slate-700 border border-slate-600 hover:border-slate-500"
+              >
+                <span>Next</span>
+                <ChevronRight size={20} className="group-hover:translate-x-0.5 transition-transform" />
+              </button>
+
+              <button
+                onClick={handleReset}
+                className="group flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg border border-slate-600 hover:border-slate-500"
+              >
+                <RotateCcw size={20} className="group-hover:rotate-180 transition-transform duration-500" />
+                <span>Reset</span>
+              </button>
+            </div>
+
+            {/* Progress Indicator */}
+            <div className="flex flex-col items-center gap-3 w-full max-w-md">
+              <div className="w-full bg-slate-700/50 rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 h-full transition-all duration-300 rounded-full"
+                  style={{ width: `${(animationStep / MAX_STEPS) * 100}%` }}
+                />
+              </div>
+              <div className="text-slate-400 text-sm font-medium">
+                Step {animationStep} of {MAX_STEPS}
+              </div>
+            </div>
+
+            {/* Info Text */}
+            <div className="text-center text-slate-400 text-sm max-w-2xl pt-2 border-t border-slate-700/50">
+              <p className="leading-relaxed">
+                Each connection displays its weight (w). Biases (b) appear next to neurons.
+                Computation: <span className="text-slate-300 font-mono">z = b + Σ(input × weight)</span>, then <span className="text-slate-300 font-mono">a = σ(z)</span>
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
