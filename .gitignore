@@ -4,3 +4,5 @@ weights/*
 .env
 .DS_Store
 data/
+*__pycache__*
+experiments/006_chatty_bot/conversation_log.txt

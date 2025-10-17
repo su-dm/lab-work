@@ -1,0 +1,1 @@
+This is an application that is meant to serve as a unique type of chatbot. Normal chat bots wait for you to prompt them, this is meant to initiate the conversations.
