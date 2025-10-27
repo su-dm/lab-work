@@ -15,6 +15,7 @@ dependencies = [
     "ray[rllib]>=2.49.2",
     "tensorboard>=2.20.0",
     "tensorflow>=2.20.0",
+    "tiktoken>=0.12.0",
     "torch>=2.8.0",
     "transformers>=4.56.0",
 ]

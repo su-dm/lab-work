@@ -16,6 +16,7 @@ class MLP(nn.Module):
 if __name__ == "__main__":
     mlp = MLP()
     x = torch.randn(10)
+    nn.ReLU
     results = mlp(x)
     print(results)
     best = torch.argmax(results)
