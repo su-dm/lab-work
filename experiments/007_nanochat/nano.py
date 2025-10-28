@@ -4,14 +4,22 @@ from torch import nn
 import torch.nn.functional as F
 
 """
+This file is me reimplementing Karpathy's nanochat repo while reducing it to the basics for inference.
+Explaining some of the details along the way for self-study.
+
+Some differences from this and the original:
+- Tiktoken tokenizer instead of his rust bpe implementation.
+- Not worried about special tokens / tool calling scaffolding
+- No KV cache
+- No RoPE for rotary embeddings
+
 Summarized architecture and components:
 - Tokenizer, text to tokens
 - Embedding layer, tokens to embeddings
-- Add positional encoding information
-- Transformer blocks, multiple blocks
-- Transformer block consists of: self-attention, feed-forward, residual connections
+- Transformer blocks
+- Transformer block consists of: attention, feed-forward, residual connections
 - Layer normalization, after each transformer block
-- Softmax layer, embeddings to probabilities
+- Softmax layer, embeddings to probabilities, and sampling
 """
 
 @dataclass
@@ -32,6 +40,7 @@ class CausalSelfAttention(nn.Module):
     Idea is instead of multiple heads for qkv use only multiple q. However Karpathy sets defautl equal heads for both.
     'GQA' Ainslie et al. 2023 shows group query attention. It's a middle ground 1<n_kv_head<n_head.
     It's a trade off between accuracy and speed. Also memory bandwidth.
+    This is hardcoded for equal heads right now.
     """
     def __init__(self, config):
         super().__init__()
@@ -56,11 +65,9 @@ class CausalSelfAttention(nn.Module):
         q, k = norm(q), norm(k)
         # make head be batch dim, i.e. (B, T, H, D) -> (B, H, T, D)
         q, k, v = q.transpose(1,2), k.transpose(1,2), v.transpose(1,2)
-        q, k, v = self.c_attn(x).split(self.n_embd, dim=2)
-        q = q.view(B, T, self.n_head, self.head_dim).transpose(1, 2)
 
-        # gqa false cause n_head == n_kv_head
-        y = F.scaled_dot_product_attention(q, k, v, is_causal=True, gqa=False)
+        # gqa false cause n_head == n_kv_head, would need different impl if not equal
+        y = F.scaled_dot_product_attention(q, k, v, is_causal=True, enable_gqa=False)
         # Re-assemble the heads side-by-side and project back to residual
         y = y.transpose(1,2).contiguous().view(B, T, -1)
         y = self.c_proj(y)
@@ -91,6 +98,7 @@ class Block(nn.Module):
         "normalize input, apply attention, residual added and normalized again, mlp on that and out with residual added"
         x = x + self.attn(norm(x))
         x = x + self.mlp(norm(x))
+        return x
 
 class GPT(nn.Module):
     def __init__(self, config: GPTConfig):
@@ -99,13 +107,18 @@ class GPT(nn.Module):
         self.transformer = nn.ModuleDict({
             # word token embeddings
             "wte": nn.Embedding(config.vocab_size, config.n_embd),
+            # positional embeddings
+            "wpe": nn.Embedding(config.sequence_len, config.n_embd),
             "h": nn.ModuleList([Block(config, layer_idx) for layer_idx in range(config.n_layer)]),
         })
+        self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
     
     def forward(self, idx):
         B, T = idx.size() # batch size, sequence length
 
-        x = self.transformer.wte(idx) 
+        pos = torch.arange(0, T, dtype=torch.long, device=idx.device).unsqueeze(0)
+        # use basic positional embeddings to simplify in absece of RoPE/rotary
+        x = self.transformer.wte(idx) + self.transformer.wpe(pos)
         x = norm(x)
         for block in self.transformer.h:
             # kv_cache would cache computation for attention here
@@ -113,10 +126,35 @@ class GPT(nn.Module):
             # Taking out to simplify, focusing on transformer arch
             x = block(x)
         x = norm(x)
+        logits = self.lm_head(x)
+
+        # Neural Combinatorial Optimization Bello et al 2017, and Gemma 2 2024 describe clipping or softcapping logits to improve exploration + stability"
+        # This effectively limits logits to +/- softcap
+        softcap = 15
+        logits = softcap * torch.tanh(logits / softcap)
+        return logits
+
+def sample_next_token(logits, temperature, rng=None, top_k=None):
+    if temperature == 0.0:
+        return torch.argmax(logits, dim=-1, keepdim=True)
+    if top_k is not None:
+        k = min(top_k, logits.size(-1))
+        # grab top k logits by value
+        vals, idx = torch.topk(logits, k, dim=-1)
+        vals = vals / temperature
+        probs = F.softmax(vals, dim=-1)
+        # sample based on the probabilities, allows for exploration
+        choice = torch.multinomial(probs, num_samples=1, generator=rng)
+        # gather idx choice along column 1
+        return idx.gather(1, choice)
+    else:
+        logits = logits / temperature
+        probs = F.softmax(logits, dim=-1)
+        return torch.multinomial(probs, num_samples=1, generator=rng)
+
 
 if __name__ == "__main__":
     config = GPTConfig()
-    gpt = GPT(config)
 
     input = "Hello, how are you?"
     """
@@ -140,23 +178,36 @@ if __name__ == "__main__":
     ]
     Going to use tiktoken tokenizer for this because not focused on tokenizer implementation here.
     """
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
     import tiktoken
     tokenizer = tiktoken.encoding_for_model("gpt-4")
     tokens = tokenizer.encode(input)
+    config.vocab_size = tokenizer.n_vocab
     print("Type of tokens:", type(tokens))
     print("Tokens:", tokens)
+    tokens = torch.tensor([tokens])
+    gpt = GPT(config)
 
     """
     Nanochat Engine wrapper around core model handles initialization,kv cache, code+assistant special tokens and state tracking.
     Let's focus on the core model for now and reduce it to just gathering next tokens.
     """
-
-
-
-
-    torch.cuda.synchronize()
     result = []
+    # max reply length 10 tokens
+    for _ in range(10):
+        logits = gpt(tokens)
+        # Softcapped non-softmaxed logits. Depending on temperature, topk ect. different ways to sample next token
+        logits = logits[:, -1, :] # (B, vocab_size) we predict next token for each position in sequence, but we only look at the last position aka next token
+        temperature = 1.0
+        next_token = sample_next_token(logits, temperature, rng=None, top_k=None)
+        #if next_token.item() == tokenizer.is_special_token:
+        # not looking up what the specific tokenizers value is this is dummy
+        if next_token.item() == "<|eos|>":
+            break
+        result.append(next_token.item())
+        tokens = torch.cat([tokens, next_token], dim=1)
 
-    out = model.generate(tokens)
-    tokenizer.decode(out)
+    response = tokenizer.decode(result)
+    print(response)
 

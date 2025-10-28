@@ -44,5 +44,6 @@ z3 = torch.mul(t1, t2)
 
 single element tensor can convert back to a scalar by calling .item()
 
-
+arrange is a range T, unsqueeze adds a dimension
+torch.arange(0, T, dtype=torch.long, device=idx.device).unsqueeze(0)
 """
