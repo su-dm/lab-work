@@ -6,7 +6,7 @@ scripts/base_train.py
 Parameters
 
 Model:
-depth
+depth - number of layers and n_embd = num layers * 64, scales size of model and embed
 
 Training:
 num_iterations
