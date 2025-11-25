@@ -6,3 +6,4 @@ weights/*
 data/
 *__pycache__*
 experiments/006_chatty_bot/conversation_log.txt
+experiments/008_tiny_inference/uber_v_heller.txt
