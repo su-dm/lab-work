@@ -1,0 +1,48 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: orpo-sft-1
+  namespace: default
+  labels:
+    kueue.x-k8s.io/queue-name: testing-queue
+  annotations:
+    provreq.kueue.x-k8s.io/maxRunDurationSeconds: "6000"
+spec:
+  parallelism: 1
+  completions: 1
+  suspend: true
+  template:
+    metadata:
+      annotations:
+        gke-gcsfuse/volumes: "true"
+    spec:
+      nodeSelector:
+        cloud.google.com/gke-nodepool: a2-highgpu-4g
+      tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: orpo-sft
+        image: us-central1-docker.pkg.dev/sudm-ai/testing/orpo-sft:latest
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "40Gi"
+            nvidia.com/gpu: 4
+          limits:
+            cpu: "500m"
+            memory: "50Gi"
+            nvidia.com/gpu: 4
+        volumeMounts:
+        - name: gcs-fuse-csi-ephemeral
+          mountPath: /mnt/gcs
+      serviceAccountName: testing-sa
+      restartPolicy: Never
+      volumes:
+      - name: gcs-fuse-csi-ephemeral
+        csi:
+          driver: gcsfuse.csi.storage.gke.io
+          volumeAttributes:
+            bucketName: sft-testing
+            mountOptions: "implicit-dirs"

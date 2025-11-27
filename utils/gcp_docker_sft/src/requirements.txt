@@ -1,0 +1,12 @@
+packaging
+flash-attn
+wandb
+transformers
+datasets
+accelerate
+peft
+trl
+bitsandbytes
+google-cloud-secret-manager
+huggingface-hub
+python-dotenv
