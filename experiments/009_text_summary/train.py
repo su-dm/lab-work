@@ -1,12 +1,13 @@
 import torch
 from unsloth import FastLanguageModel
 from datasets import load_dataset
-from trl import SFTTrainer
+from trl.trainer.sft_trainer import SFTTrainer
+from trl import SFTConfig
 from transformers import TrainingArguments
 from unsloth import is_bfloat16_supported
 
 # --- Configuration ---
-MODEL_NAME = "Qwen/Qwen3-4B-Instruct" 
+MODEL_NAME = "Qwen/Qwen3-4B-Instruct-2507" 
 MAX_SEQ_LENGTH = 32768 # H100 can handle full 32k context
 DTYPE = torch.bfloat16
 LOAD_IN_4BIT = False
@@ -38,7 +39,8 @@ model = FastLanguageModel.get_peft_model(
 
 # --- 3. Data Preparation (Multi-LexSum) ---
 print("Loading Multi-LexSum dataset...")
-dataset = load_dataset("allenai/multi_lexsum", split = "train")
+train_dataset = load_dataset("allenai/multi_lexsum", split = "train")
+eval_dataset = load_dataset("allenai/multi_lexsum", split = "validation")
 
 # Define the prompt template (ChatML format for Qwen)
 legal_prompt_style = """<|im_start|>system
@@ -72,14 +74,35 @@ def formatting_prompts_func(examples):
         
     return { "text" : texts, }
 
+# We only need the generated "text" column for the SFTTrainer
+train_dataset = train_dataset.map(
+    formatting_prompts_func, 
+    batched = True,
+    remove_columns = train_dataset.column_names
+)
+eval_dataset = eval_dataset.map(
+    formatting_prompts_func,
+    batched = True, 
+    remove_columns = eval_dataset.column_names
+)
+
 # Apply formatting
-dataset = dataset.map(formatting_prompts_func, batched = True)
+train_dataset = train_dataset.map(formatting_prompts_func, batched = True)
+eval_dataset = eval_dataset.map(formatting_prompts_func, batched = True)
 
 # --- 4. Training Arguments ---
 print("Starting training...")
 
-training_args = TrainingArguments(
+trainer_config = SFTConfig(
+    output_dir = "outputs",
+    max_length = MAX_SEQ_LENGTH,
+    dataset_text_field = "text",
+    dataset_num_proc = 2,
+    packing = False,
+    
+    # Training Parameters
     per_device_train_batch_size = 4,
+    per_device_eval_batch_size = 4,
     gradient_accumulation_steps = 4, # Effective batch size = 16
     warmup_steps = 100, # Increased for larger batch size
     max_steps = 600, # Roughly 1 epoch given the batch size
@@ -91,18 +114,22 @@ training_args = TrainingArguments(
     weight_decay = 0.01,
     lr_scheduler_type = "cosine", # Cosine usually performs better for full convergence
     seed = 3407,
-    output_dir = "outputs",
+    
+    # Validation & Logging
+    eval_strategy = "steps",
+    eval_steps = 50,
+    save_strategy = "steps",
+    save_steps = 50,
+    report_to = "wandb",
+    run_name = "qwen3-4b-legal-brief-h100",
 )
 
 trainer = SFTTrainer(
     model = model,
-    tokenizer = tokenizer,
-    train_dataset = dataset,
-    dataset_text_field = "text",
-    max_seq_length = MAX_SEQ_LENGTH,
-    dataset_num_proc = 2,
-    packing = False, # Can set to True for slightly faster training if sequences are short
-    args = training_args,
+    processing_class = tokenizer,
+    train_dataset = train_dataset,
+    eval_dataset = eval_dataset,
+    args = trainer_config,
 )
 
 # --- 5. Train & Save ---
