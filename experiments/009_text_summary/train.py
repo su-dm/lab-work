@@ -38,9 +38,9 @@ model = FastLanguageModel.get_peft_model(
 )
 
 # --- 3. Data Preparation (Multi-LexSum) ---
-print("Loading Multi-LexSum dataset...")
-train_dataset = load_dataset("allenai/multi_lexsum", split = "train")
-eval_dataset = load_dataset("allenai/multi_lexsum", split = "validation")
+print("Loading LexSumm dataset...")
+eval_dataset = load_dataset("CJWeiss/LexSumm", "multilong", split="validation")
+train_dataset = load_dataset("CJWeiss/LexSumm", "multilong", split="train")
 
 # Define the prompt template (ChatML format for Qwen)
 legal_prompt_style = """<|im_start|>system
@@ -56,8 +56,8 @@ Case Text:
 EOS_TOKEN = tokenizer.eos_token
 
 def formatting_prompts_func(examples):
-    inputs = examples["sources"]
-    outputs = examples["summary/long"] # Using 'long' summary as the proxy for a brief
+    inputs = examples["input"]
+    outputs = examples["output"] # Using 'long' summary as the proxy for a brief
     texts = []
     
     for input_doc_list, output_text in zip(inputs, outputs):
