@@ -86,18 +86,13 @@ eval_dataset = eval_dataset.map(
     remove_columns = eval_dataset.column_names
 )
 
-# Apply formatting
-train_dataset = train_dataset.map(formatting_prompts_func, batched = True)
-eval_dataset = eval_dataset.map(formatting_prompts_func, batched = True)
-
 # --- 4. Training Arguments ---
 print("Starting training...")
-
 trainer_config = SFTConfig(
     output_dir = "outputs",
     max_length = MAX_SEQ_LENGTH,
     dataset_text_field = "text",
-    dataset_num_proc = 2,
+    dataset_num_proc = 1, # bugs if you do multi-proc
     packing = False,
     
     # Training Parameters

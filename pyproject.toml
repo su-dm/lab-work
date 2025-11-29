@@ -21,4 +21,5 @@ dependencies = [
     "trl>=0.22.2",
     "unsloth>=2025.11.4",
     "vllm==0.11.2",
+    "wandb>=0.23.0",
 ]
