@@ -1,6 +1,7 @@
 import csv
 import os
 from datetime import datetime
+from typing import Any, Dict
 import gymnasium
 import numpy as np
 import ray
@@ -8,40 +9,37 @@ import torch
 import torch.nn as nn
 from ray import train, tune
 from ray.rllib.algorithms.ppo import PPOConfig
-from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
-from ray.rllib.models import ModelCatalog
+from ray.rllib.core.rl_module.rl_module import RLModule
+from ray.rllib.core.rl_module.torch import TorchRLModule
 from ray.rllib.utils.annotations import override
 from ray.tune import CLIReporter
 
 from multi_lstm_ensemble import MultiLSTMEnsemble, MultiLSTMEnsembleWithProjection
 
 
-class MultiLSTMEnsembleRLModel(TorchModelV2, nn.Module):
+class MultiLSTMEnsembleRLModule(TorchRLModule):
     """
-    RayRLlib compatible model using the MultiLSTMEnsemble architecture.
-    This model can be used with any RayRLlib algorithm (PPO, SAC, etc.)
+    RLModule using the MultiLSTMEnsemble architecture for the new RayRLlib API stack.
+    This module can be used with any RayRLlib algorithm (PPO, SAC, etc.)
     """
 
-    def __init__(self, obs_space, action_space, num_outputs, model_config, name):
-        TorchModelV2.__init__(
-            self, obs_space, action_space, num_outputs, model_config, name
-        )
-        nn.Module.__init__(self)
-
-        # Get custom model configuration
-        custom_config = model_config.get("custom_model_config", {})
+    def setup(self):
+        """Initialize the model architecture."""
+        # Get model configuration
+        model_config = self.model_config.get("model_config_dict", {})
 
         # LSTM architecture parameters
-        self.hidden_size = custom_config.get("hidden_size", 128)
-        self.num_lstms = custom_config.get("num_lstms", 3)
-        self.num_layers = custom_config.get("num_layers", 1)
-        self.final_hidden_size = custom_config.get("final_hidden_size", None)
-        self.dropout = custom_config.get("dropout", 0.0)
-        self.bidirectional = custom_config.get("bidirectional", False)
-        self.use_projection = custom_config.get("use_projection", False)
-        self.projection_size = custom_config.get("projection_size", None)
+        self.hidden_size = model_config.get("hidden_size", 128)
+        self.num_lstms = model_config.get("num_lstms", 3)
+        self.num_layers = model_config.get("num_layers", 1)
+        self.final_hidden_size = model_config.get("final_hidden_size", None)
+        self.dropout = model_config.get("dropout", 0.0)
+        self.bidirectional = model_config.get("bidirectional", False)
+        self.use_projection = model_config.get("use_projection", False)
+        self.projection_size = model_config.get("projection_size", None)
 
         # Input size from observation space
+        obs_space = self.observation_space
         if isinstance(obs_space, gymnasium.spaces.Box):
             input_size = int(np.product(obs_space.shape))
         else:
@@ -75,30 +73,23 @@ class MultiLSTMEnsembleRLModel(TorchModelV2, nn.Module):
         final_hidden = self.final_hidden_size or self.hidden_size
         lstm_output_size = final_hidden * num_directions
 
-        # Policy head (action logits)
-        self.policy_head = nn.Linear(lstm_output_size, num_outputs)
+        # Action space size
+        action_space = self.action_space
+        if isinstance(action_space, gymnasium.spaces.Discrete):
+            num_outputs = action_space.n
+        else:
+            num_outputs = int(np.product(action_space.shape))
+
+        # Policy head (action logits for discrete, mean for continuous)
+        self.pi = nn.Linear(lstm_output_size, num_outputs)
 
         # Value head (state value estimation)
-        self.value_head = nn.Linear(lstm_output_size, 1)
+        self.vf = nn.Linear(lstm_output_size, 1)
 
-        # Store the current value output
-        self._value_out = None
-
-    @override(TorchModelV2)
-    def forward(self, input_dict, state, seq_lens):
-        """
-        Forward pass of the model.
-
-        Args:
-            input_dict: Dictionary with observation tensor
-            state: List of hidden states (for recurrent models)
-            seq_lens: Tensor of sequence lengths for each batch element
-
-        Returns:
-            policy_logits: Action logits
-            state: Updated hidden state
-        """
-        obs = input_dict["obs"]
+    @override(RLModule)
+    def _forward_inference(self, batch: Dict[str, Any]) -> Dict[str, Any]:
+        """Forward pass for inference (action selection)."""
+        obs = batch["obs"]
 
         # Flatten observation if needed and add sequence dimension
         if len(obs.shape) == 2:
@@ -106,25 +97,45 @@ class MultiLSTMEnsembleRLModel(TorchModelV2, nn.Module):
             obs = obs.unsqueeze(1)
 
         # Forward pass through the ensemble
-        lstm_output, (h_n, c_n) = self.lstm_ensemble(obs)
+        lstm_output, _ = self.lstm_ensemble(obs)
 
         # Take the last timestep output
-        # Shape: (batch_size, lstm_output_size)
         features = lstm_output[:, -1, :]
 
-        # Get policy logits and value
-        policy_logits = self.policy_head(features)
-        self._value_out = self.value_head(features).squeeze(-1)
+        # Get action logits
+        action_logits = self.pi(features)
 
-        return policy_logits, state
+        return {"action_dist_inputs": action_logits}
 
-    @override(TorchModelV2)
-    def value_function(self):
-        """
-        Returns the value function output for the most recent forward pass.
-        """
-        assert self._value_out is not None, "Must call forward() first"
-        return self._value_out
+    @override(RLModule)
+    def _forward_exploration(self, batch: Dict[str, Any]) -> Dict[str, Any]:
+        """Forward pass for exploration (same as inference for PPO)."""
+        return self._forward_inference(batch)
+
+    @override(RLModule)
+    def _forward_train(self, batch: Dict[str, Any]) -> Dict[str, Any]:
+        """Forward pass for training."""
+        obs = batch["obs"]
+
+        # Flatten observation if needed and add sequence dimension
+        if len(obs.shape) == 2:
+            # (batch_size, obs_dim) -> (batch_size, 1, obs_dim)
+            obs = obs.unsqueeze(1)
+
+        # Forward pass through the ensemble
+        lstm_output, _ = self.lstm_ensemble(obs)
+
+        # Take the last timestep output
+        features = lstm_output[:, -1, :]
+
+        # Get action logits and value
+        action_logits = self.pi(features)
+        vf_output = self.vf(features).squeeze(-1)
+
+        return {
+            "action_dist_inputs": action_logits,
+            "vf_preds": vf_output,
+        }
 
 
 def main():
@@ -135,28 +146,16 @@ def main():
     # Initialize Ray
     ray.init(ignore_reinit_error=True)
 
-    # Register the custom model
-    ModelCatalog.register_custom_model("multi_lstm_ensemble", MultiLSTMEnsembleRLModel)
-
-    # Configure the PPO algorithm
+    # Configure the PPO algorithm with new API stack
     config = (
         PPOConfig()
         .environment(env="CartPole-v1")  # Change this to your environment
         .framework("torch")
         .env_runners(num_env_runners=4)
-        .training(
-            train_batch_size=4000,
-            lr=0.0003,
-            gamma=0.99,
-            lambda_=0.95,
-            minibatch_size=256,
-            num_epochs=10,
-            clip_param=0.2,
-            vf_clip_param=10.0,
-            entropy_coeff=0.01,
-            model={
-                "custom_model": "multi_lstm_ensemble",
-                "custom_model_config": {
+        .rl_module(
+            rl_module_spec={"module_class": MultiLSTMEnsembleRLModule},
+            model_config={
+                "model_config_dict": {
                     "hidden_size": 64,
                     "num_lstms": 3,
                     "num_layers": 1,
@@ -165,8 +164,17 @@ def main():
                     "bidirectional": False,
                     "use_projection": False,
                     "projection_size": None,
-                },
+                }
             },
+        )
+        .training(
+            train_batch_size=4000,
+            lr=0.0003,
+            gamma=0.99,
+            lambda_=0.95,
+            sgd_minibatch_size=256,
+            num_sgd_iter=10,
+            vf_clip_param=10.0,
         )
         .evaluation(
             evaluation_interval=10,
@@ -203,14 +211,16 @@ def main():
     best_reward = -float('inf')
     start_time = datetime.now()
 
+    model_cfg = config.model_config["model_config_dict"]
+
     print("\n" + "=" * 80)
-    print("Training MultiLSTMEnsemble with RayRLlib PPO")
+    print("Training MultiLSTMEnsemble with RayRLlib PPO (New API Stack)")
     print("=" * 80)
     print(f"Environment: CartPole-v1")
-    print(f"Model: MultiLSTMEnsemble")
-    print(f"  - Hidden size: {config['model']['custom_model_config']['hidden_size']}")
-    print(f"  - Number of LSTMs: {config['model']['custom_model_config']['num_lstms']}")
-    print(f"  - Final hidden size: {config['model']['custom_model_config']['final_hidden_size']}")
+    print(f"Model: MultiLSTMEnsembleRLModule")
+    print(f"  - Hidden size: {model_cfg['hidden_size']}")
+    print(f"  - Number of LSTMs: {model_cfg['num_lstms']}")
+    print(f"  - Final hidden size: {model_cfg['final_hidden_size']}")
     print(f"\nMetrics will be saved to: {csv_file}")
     print("=" * 80)
     print(f"{'Steps':<10} {'Iter':<6} {'Reward':<12} {'P-Loss':<10} {'V-Loss':<10} {'Entropy':<10} {'Conv':<8}")
@@ -299,12 +309,9 @@ def main():
 
 def hyperparameter_tuning():
     """
-    Example of hyperparameter tuning with Ray Tune.
+    Example of hyperparameter tuning with Ray Tune using new API stack.
     """
     ray.init(ignore_reinit_error=True)
-
-    # Register the custom model
-    ModelCatalog.register_custom_model("multi_lstm_ensemble", MultiLSTMEnsembleRLModel)
 
     # Configure with hyperparameter search
     config = (
@@ -312,15 +319,10 @@ def hyperparameter_tuning():
         .environment(env="CartPole-v1")
         .framework("torch")
         .env_runners(num_env_runners=2)
-        .training(
-            train_batch_size=4000,
-            lr=tune.grid_search([0.0001, 0.0003, 0.001]),
-            gamma=0.99,
-            minibatch_size=tune.grid_search([128, 256]),
-            num_epochs=tune.choice([5, 10]),
-            model={
-                "custom_model": "multi_lstm_ensemble",
-                "custom_model_config": {
+        .rl_module(
+            rl_module_spec={"module_class": MultiLSTMEnsembleRLModule},
+            model_config={
+                "model_config_dict": {
                     "hidden_size": tune.choice([64, 128]),
                     "num_lstms": tune.choice([2, 3, 4]),
                     "num_layers": 1,
@@ -328,8 +330,16 @@ def hyperparameter_tuning():
                     "dropout": 0.1,
                     "bidirectional": False,
                     "use_projection": False,
-                },
+                    "projection_size": None,
+                }
             },
+        )
+        .training(
+            train_batch_size=4000,
+            lr=tune.grid_search([0.0001, 0.0003, 0.001]),
+            gamma=0.99,
+            sgd_minibatch_size=tune.grid_search([128, 256]),
+            num_sgd_iter=tune.choice([5, 10]),
         )
         .evaluation(
             evaluation_interval=10,
@@ -352,7 +362,7 @@ def hyperparameter_tuning():
                     "learners/default_policy/vf_loss": "v_loss",
                     "time_total_s": "time(s)",
                 },
-                parameter_columns=["lr", "minibatch_size"],
+                parameter_columns=["lr", "sgd_minibatch_size"],
                 max_report_frequency=30,
             )
         )
