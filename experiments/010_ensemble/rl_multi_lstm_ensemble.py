@@ -9,19 +9,26 @@ import torch
 import torch.nn as nn
 from ray import train, tune
 from ray.rllib.algorithms.ppo import PPOConfig
-from ray.rllib.core.rl_module.rl_module import RLModule
+from ray.rllib.core.rl_module.rl_module import RLModule, RLModuleSpec
 from ray.rllib.core.rl_module.torch import TorchRLModule
+from ray.rllib.core.rl_module.apis import ValueFunctionAPI
+from ray.rllib.core.columns import Columns
 from ray.rllib.utils.annotations import override
+from ray.rllib.utils.typing import TensorType
 from ray.tune import CLIReporter
 
 from multi_lstm_ensemble import MultiLSTMEnsemble, MultiLSTMEnsembleWithProjection
 
 
-class MultiLSTMEnsembleRLModule(TorchRLModule):
+class MultiLSTMEnsembleRLModule(TorchRLModule, ValueFunctionAPI):
     """
     RLModule using the MultiLSTMEnsemble architecture for the new RayRLlib API stack.
     This module can be used with any RayRLlib algorithm (PPO, SAC, etc.)
     """
+
+    def __init__(self, *args, **kwargs):
+        # Initialize parent class first
+        super().__init__(*args, **kwargs)
 
     def setup(self):
         """Initialize the model architecture."""
@@ -41,13 +48,13 @@ class MultiLSTMEnsembleRLModule(TorchRLModule):
         # Input size from observation space
         obs_space = self.observation_space
         if isinstance(obs_space, gymnasium.spaces.Box):
-            input_size = int(np.product(obs_space.shape))
+            input_size = int(np.prod(obs_space.shape))
         else:
             input_size = obs_space.n
 
-        # Create the multi-LSTM ensemble
+        # Create the multi-LSTM ensemble encoder
         if self.use_projection and self.projection_size is not None:
-            self.lstm_ensemble = MultiLSTMEnsembleWithProjection(
+            self.encoder = MultiLSTMEnsembleWithProjection(
                 input_size=input_size,
                 hidden_size=self.hidden_size,
                 num_lstms=self.num_lstms,
@@ -58,7 +65,7 @@ class MultiLSTMEnsembleRLModule(TorchRLModule):
                 bidirectional=self.bidirectional
             )
         else:
-            self.lstm_ensemble = MultiLSTMEnsemble(
+            self.encoder = MultiLSTMEnsemble(
                 input_size=input_size,
                 hidden_size=self.hidden_size,
                 num_lstms=self.num_lstms,
@@ -78,7 +85,7 @@ class MultiLSTMEnsembleRLModule(TorchRLModule):
         if isinstance(action_space, gymnasium.spaces.Discrete):
             num_outputs = action_space.n
         else:
-            num_outputs = int(np.product(action_space.shape))
+            num_outputs = int(np.prod(action_space.shape))
 
         # Policy head (action logits for discrete, mean for continuous)
         self.pi = nn.Linear(lstm_output_size, num_outputs)
@@ -87,7 +94,7 @@ class MultiLSTMEnsembleRLModule(TorchRLModule):
         self.vf = nn.Linear(lstm_output_size, 1)
 
     @override(RLModule)
-    def _forward_inference(self, batch: Dict[str, Any]) -> Dict[str, Any]:
+    def _forward_inference(self, batch: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """Forward pass for inference (action selection)."""
         obs = batch["obs"]
 
@@ -96,8 +103,8 @@ class MultiLSTMEnsembleRLModule(TorchRLModule):
             # (batch_size, obs_dim) -> (batch_size, 1, obs_dim)
             obs = obs.unsqueeze(1)
 
-        # Forward pass through the ensemble
-        lstm_output, _ = self.lstm_ensemble(obs)
+        # Forward pass through the ensemble encoder
+        lstm_output, _ = self.encoder(obs)
 
         # Take the last timestep output
         features = lstm_output[:, -1, :]
@@ -108,13 +115,13 @@ class MultiLSTMEnsembleRLModule(TorchRLModule):
         return {"action_dist_inputs": action_logits}
 
     @override(RLModule)
-    def _forward_exploration(self, batch: Dict[str, Any]) -> Dict[str, Any]:
+    def _forward_exploration(self, batch: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """Forward pass for exploration (same as inference for PPO)."""
-        return self._forward_inference(batch)
+        return self._forward_inference(batch, **kwargs)
 
     @override(RLModule)
-    def _forward_train(self, batch: Dict[str, Any]) -> Dict[str, Any]:
-        """Forward pass for training."""
+    def _forward_train(self, batch: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+        """Forward pass for training (keep embeddings for value func. call)."""
         obs = batch["obs"]
 
         # Flatten observation if needed and add sequence dimension
@@ -122,20 +129,46 @@ class MultiLSTMEnsembleRLModule(TorchRLModule):
             # (batch_size, obs_dim) -> (batch_size, 1, obs_dim)
             obs = obs.unsqueeze(1)
 
-        # Forward pass through the ensemble
-        lstm_output, _ = self.lstm_ensemble(obs)
+        # Forward pass through the ensemble encoder
+        lstm_output, _ = self.encoder(obs)
 
         # Take the last timestep output
         features = lstm_output[:, -1, :]
 
-        # Get action logits and value
+        # Get action logits
         action_logits = self.pi(features)
-        vf_output = self.vf(features).squeeze(-1)
 
+        # Return embeddings for value function computation
         return {
-            "action_dist_inputs": action_logits,
-            "vf_preds": vf_output,
+            Columns.ACTION_DIST_INPUTS: action_logits,
+            Columns.EMBEDDINGS: features,  # Keep embeddings for compute_values
         }
+
+    @override(ValueFunctionAPI)
+    def compute_values(
+        self,
+        batch: Dict[str, Any],
+        embeddings: Any = None,
+    ) -> TensorType:
+        """Compute value function predictions for the given batch."""
+        if embeddings is None:
+            obs = batch["obs"]
+
+            # Flatten observation if needed and add sequence dimension
+            if len(obs.shape) == 2:
+                # (batch_size, obs_dim) -> (batch_size, 1, obs_dim)
+                obs = obs.unsqueeze(1)
+
+            # Forward pass through the ensemble encoder
+            lstm_output, _ = self.encoder(obs)
+
+            # Take the last timestep output
+            embeddings = lstm_output[:, -1, :]
+
+        # Value head
+        vf_out = self.vf(embeddings)
+        # Squeeze out last dimension (single node value head)
+        return vf_out.squeeze(-1)
 
 
 def main():
@@ -153,28 +186,28 @@ def main():
         .framework("torch")
         .env_runners(num_env_runners=4)
         .rl_module(
-            rl_module_spec={"module_class": MultiLSTMEnsembleRLModule},
-            model_config={
-                "model_config_dict": {
-                    "hidden_size": 64,
-                    "num_lstms": 3,
-                    "num_layers": 1,
-                    "final_hidden_size": 128,
-                    "dropout": 0.1,
-                    "bidirectional": False,
-                    "use_projection": False,
-                    "projection_size": None,
+            rl_module_spec=RLModuleSpec(
+                module_class=MultiLSTMEnsembleRLModule,
+                model_config={
+                    "model_config_dict": {
+                        "hidden_size": 64,
+                        "num_lstms": 3,
+                        "num_layers": 1,
+                        "final_hidden_size": 128,
+                        "dropout": 0.1,
+                        "bidirectional": False,
+                        "use_projection": False,
+                        "projection_size": None,
+                    }
                 }
-            },
+            ),
         )
         .training(
             train_batch_size=4000,
             lr=0.0003,
             gamma=0.99,
-            lambda_=0.95,
-            sgd_minibatch_size=256,
+            minibatch_size=256,
             num_sgd_iter=10,
-            vf_clip_param=10.0,
         )
         .evaluation(
             evaluation_interval=10,
@@ -211,7 +244,7 @@ def main():
     best_reward = -float('inf')
     start_time = datetime.now()
 
-    model_cfg = config.model_config["model_config_dict"]
+    model_cfg = config.rl_module_spec.model_config["model_config_dict"]
 
     print("\n" + "=" * 80)
     print("Training MultiLSTMEnsemble with RayRLlib PPO (New API Stack)")
@@ -284,7 +317,7 @@ def main():
         if episode_reward_mean > best_reward:
             best_reward = episode_reward_mean
             checkpoint_dir = algo.save()
-            print(f"\n  ★ New best reward! {best_reward:.2f} | Checkpoint: {checkpoint_dir}\n")
+            print(f"\n  ★ New best reward! {best_reward:.2f}\n")
 
         # Save periodic checkpoints
         if i % 25 == 0 and i > 0:
@@ -320,19 +353,21 @@ def hyperparameter_tuning():
         .framework("torch")
         .env_runners(num_env_runners=2)
         .rl_module(
-            rl_module_spec={"module_class": MultiLSTMEnsembleRLModule},
-            model_config={
-                "model_config_dict": {
-                    "hidden_size": tune.choice([64, 128]),
-                    "num_lstms": tune.choice([2, 3, 4]),
-                    "num_layers": 1,
-                    "final_hidden_size": tune.choice([128, 256]),
-                    "dropout": 0.1,
-                    "bidirectional": False,
-                    "use_projection": False,
-                    "projection_size": None,
+            rl_module_spec=RLModuleSpec(
+                module_class=MultiLSTMEnsembleRLModule,
+                model_config={
+                    "model_config_dict": {
+                        "hidden_size": tune.choice([64, 128]),
+                        "num_lstms": tune.choice([2, 3, 4]),
+                        "num_layers": 1,
+                        "final_hidden_size": tune.choice([128, 256]),
+                        "dropout": 0.1,
+                        "bidirectional": False,
+                        "use_projection": False,
+                        "projection_size": None,
+                    }
                 }
-            },
+            ),
         )
         .training(
             train_batch_size=4000,
