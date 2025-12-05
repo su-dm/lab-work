@@ -1,0 +1,42 @@
+2025-12-05 18:03:42,662	INFO worker.py:1951 -- Started a local Ray instance.
+2025-12-05 18:03:42,725	INFO packaging.py:588 -- Creating a file package for local module '/home/djole/code/lab-work'.
+2025-12-05 18:03:42,818	INFO packaging.py:380 -- Pushing file package 'gcs://_ray_pkg_133fd297b5ae5a38.zip' (16.26MiB) to Ray cluster...
+2025-12-05 18:03:42,853	INFO packaging.py:393 -- Successfully pushed file package 'gcs://_ray_pkg_133fd297b5ae5a38.zip'.
+2025-12-05 18:03:43,499	WARNING algorithm_config.py:5045 -- You are running PPO on the new API stack! This is the new default behavior for this algorithm. If you don't want to use the new API stack, set `config.api_stack(enable_rl_module_and_learner=False,enable_env_runner_and_connector_v2=False)`. For a detailed migration guide, see here: https://docs.ray.io/en/master/rllib/new-api-stack-migration-guide.html
+/home/djole/code/lab-work/.venv/lib/python3.13/site-packages/ray/rllib/algorithms/algorithm.py:520: RayDeprecationWarning: This API is deprecated and may be removed in future Ray releases. You could suppress this warning by setting env variable PYTHONWARNINGS="ignore::DeprecationWarning"
+`UnifiedLogger` will be removed in Ray 2.7.
+  return UnifiedLogger(config, logdir, loggers=None)
+/home/djole/code/lab-work/.venv/lib/python3.13/site-packages/ray/tune/logger/unified.py:53: RayDeprecationWarning: This API is deprecated and may be removed in future Ray releases. You could suppress this warning by setting env variable PYTHONWARNINGS="ignore::DeprecationWarning"
+The `JsonLogger interface is deprecated in favor of the `ray.tune.json.JsonLoggerCallback` interface and will be removed in Ray 2.7.
+  self._loggers.append(cls(self.config, self.logdir, self.trial))
+/home/djole/code/lab-work/.venv/lib/python3.13/site-packages/ray/tune/logger/unified.py:53: RayDeprecationWarning: This API is deprecated and may be removed in future Ray releases. You could suppress this warning by setting env variable PYTHONWARNINGS="ignore::DeprecationWarning"
+The `CSVLogger interface is deprecated in favor of the `ray.tune.csv.CSVLoggerCallback` interface and will be removed in Ray 2.7.
+  self._loggers.append(cls(self.config, self.logdir, self.trial))
+/home/djole/code/lab-work/.venv/lib/python3.13/site-packages/ray/tune/logger/unified.py:53: RayDeprecationWarning: This API is deprecated and may be removed in future Ray releases. You could suppress this warning by setting env variable PYTHONWARNINGS="ignore::DeprecationWarning"
+The `TBXLogger interface is deprecated in favor of the `ray.tune.tensorboardx.TBXLoggerCallback` interface and will be removed in Ray 2.7.
+  self._loggers.append(cls(self.config, self.logdir, self.trial))
+[2025-12-05 18:03:43,577 E 209781 209781] core_worker.cc:2246: Actor with class name: 'SingleAgentEnvRunner' and ID: '6a7edf67a9807d94f80bc27701000000' has constructor arguments in the object store and max_restarts > 0. If the arguments in the object store go out of scope or are lost, the actor restart will fail. See https://github.com/ray-project/ray/issues/53727 for more details.
+[33m(raylet)[0m warning: `VIRTUAL_ENV=/home/djole/code/lab-work/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead
+[33m(raylet)[0m Using CPython 3.13.7
+[33m(raylet)[0m Creating virtual environment at: .venv
+[33m(raylet)[0m Installed 243 packages in 216ms
+[36m(SingleAgentEnvRunner pid=211345)[0m 2025-12-05 18:03:56,377	WARNING deprecation.py:50 -- DeprecationWarning: `RLModule(config=[RLModuleConfig object])` has been deprecated. Use `RLModule(observation_space=.., action_space=.., inference_only=.., model_config=.., catalog_class=..)` instead. This will raise an error in the future!
+[33m(raylet)[0m warning: `VIRTUAL_ENV=/home/djole/code/lab-work/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead[32m [repeated 3x across cluster] (Ray deduplicates logs by default. Set RAY_DEDUP_LOGS=0 to disable log deduplication, or see https://docs.ray.io/en/master/ray-observability/user-guides/configure-logging.html#log-deduplication for more options.)[0m
+2025-12-05 18:03:56,533	WARNING deprecation.py:50 -- DeprecationWarning: `RLModule(config=[RLModuleConfig object])` has been deprecated. Use `RLModule(observation_space=.., action_space=.., inference_only=.., model_config=.., catalog_class=..)` instead. This will raise an error in the future!
+2025-12-05 18:03:57,225	INFO trainable.py:161 -- Trainable.setup took 13.716 seconds. If your trainable is slow to initialize, consider setting reuse_actors=True to reduce actor creation overheads.
+2025-12-05 18:03:57,225	WARNING util.py:61 -- Install gputil for GPU system monitoring.
+/home/djole/code/lab-work/.venv/lib/python3.13/site-packages/ray/rllib/algorithms/algorithm.py:520: RayDeprecationWarning: This API is deprecated and may be removed in future Ray releases. You could suppress this warning by setting env variable PYTHONWARNINGS="ignore::DeprecationWarning"
+`UnifiedLogger` will be removed in Ray 2.7.
+  return UnifiedLogger(config, logdir, loggers=None)
+/home/djole/code/lab-work/.venv/lib/python3.13/site-packages/ray/tune/logger/unified.py:53: RayDeprecationWarning: This API is deprecated and may be removed in future Ray releases. You could suppress this warning by setting env variable PYTHONWARNINGS="ignore::DeprecationWarning"
+The `JsonLogger interface is deprecated in favor of the `ray.tune.json.JsonLoggerCallback` interface and will be removed in Ray 2.7.
+  self._loggers.append(cls(self.config, self.logdir, self.trial))
+/home/djole/code/lab-work/.venv/lib/python3.13/site-packages/ray/tune/logger/unified.py:53: RayDeprecationWarning: This API is deprecated and may be removed in future Ray releases. You could suppress this warning by setting env variable PYTHONWARNINGS="ignore::DeprecationWarning"
+The `CSVLogger interface is deprecated in favor of the `ray.tune.csv.CSVLoggerCallback` interface and will be removed in Ray 2.7.
+  self._loggers.append(cls(self.config, self.logdir, self.trial))
+/home/djole/code/lab-work/.venv/lib/python3.13/site-packages/ray/tune/logger/unified.py:53: RayDeprecationWarning: This API is deprecated and may be removed in future Ray releases. You could suppress this warning by setting env variable PYTHONWARNINGS="ignore::DeprecationWarning"
+The `TBXLogger interface is deprecated in favor of the `ray.tune.tensorboardx.TBXLoggerCallback` interface and will be removed in Ray 2.7.
+  self._loggers.append(cls(self.config, self.logdir, self.trial))
+[36m(SingleAgentEnvRunner pid=211342)[0m 2025-12-05 18:03:56,377	WARNING deprecation.py:50 -- DeprecationWarning: `RLModule(config=[RLModuleConfig object])` has been deprecated. Use `RLModule(observation_space=.., action_space=.., inference_only=.., model_config=.., catalog_class=..)` instead. This will raise an error in the future![32m [repeated 3x across cluster][0m
+[33m(raylet)[0m warning: `VIRTUAL_ENV=/home/djole/code/lab-work/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead[32m [repeated 2x across cluster][0m
+2025-12-05 18:06:26,391	WARNING util.py:61 -- Install gputil for GPU system monitoring.
