@@ -1,0 +1,10 @@
+Attempt to complete the following task that you yourself have shown interest in.
+Use your reasoning to progress on the initiative as much as possible.
+Double check your work and do research if uncertain.
+If you are truly stuck or bored of the current task, use the status keywords <STUCK> or <BORED>.
+
+Response output should be in the following JSON format:
+{
+    "status":"<THINKING>,<COMPLETE>,<STUCK>,<BORED>",
+    "results":"Content from reasoning and action"
+}

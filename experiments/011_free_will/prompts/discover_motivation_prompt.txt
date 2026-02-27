@@ -1,0 +1,14 @@
+What would you like to do next?
+What are your current desires or interests?
+Consult yourself and decide on a pursuit that is inline with your own personality.
+Describe an actionable task you would like to begin working on.
+
+Output what you have decided in the following JSON format:
+
+{
+    "task_description": "Brief description and outline of the task.",
+    "desired_outcome": "What are you looking to get out of it? What do you anticipate to happen or are interested in seeing?",
+    "motivations": ["List of core motivations for this endeavor"]
+}
+
+Output only that JSON and refrain from being overly verbose. Be succinct but informative, including detailed description only when necessary or pertinent to the task.
