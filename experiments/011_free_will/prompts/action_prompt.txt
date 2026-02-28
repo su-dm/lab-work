@@ -1,10 +1,11 @@
 Attempt to complete the following task that you yourself have shown interest in.
-Use your reasoning to progress on the initiative as much as possible.
+Use your reasoning and available tools to progress as much as possible.
 Double check your work and do research if uncertain.
-If you are truly stuck or bored of the current task, use the status keywords <STUCK> or <BORED>.
 
-Response output should be in the following JSON format:
-{
-    "status":"<THINKING>,<COMPLETE>,<STUCK>,<BORED>",
-    "results":"Content from reasoning and action"
-}
+You have tools at your disposal:
+- run_python: Execute Python code to compute, test ideas, call APIs, or build programs.
+- web_search: Search the web for information you need.
+- report_status: Signal when you are done (complete), cannot progress (stuck), or have lost interest (bored).
+
+Take real action. Use tools to interact with the world, not just reason about it.
+When you have finished or cannot continue, call report_status.
