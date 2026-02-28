@@ -56,10 +56,11 @@ class ReplayMemory(object):
 def select_action(model, env, state):
     EPSILON = 0.1
     if random.random() < EPSILON:
-        return env.action_space.sample()
+        action = env.action_space.sample()
+        return torch.tensor([[action]], device=device, dtype=torch.long)
     else:
-        #return model(state).argmax(dim=1).item()
-        return model(state).max()
+        with torch.no_grad():
+            return model(state.unsqueeze(0)).max(1).indices.view(1, 1)
 
 def optimize(policy_net, target_net, memory, optimizer):
     if len(memory) < BATCH_SIZE:
@@ -113,24 +114,55 @@ def optimize(policy_net, target_net, memory, optimizer):
     optimizer.step()
 
 
+def evaluate(policy_net, env, episodes=5):
+    print("\nEvaluating greedy policy...")
+    print("-" * 55)
+    rewards = []
+    for e in range(episodes):
+        state, _ = env.reset()
+        state = torch.tensor(state, device=device)
+        total_reward = 0.0
+        done = False
+        while not done:
+            with torch.no_grad():
+                action = policy_net(state.unsqueeze(0)).argmax().item()
+            observation, reward, terminated, truncated, _ = env.step(action)
+            total_reward += reward
+            done = terminated or truncated
+            state = torch.tensor(observation, device=device)
+        rewards.append(total_reward)
+        print(f"  Eval ep {e+1:>2}: reward = {total_reward:.2f}")
+    mean_r = sum(rewards) / len(rewards)
+    print(f"\nEval summary | Mean: {mean_r:.2f} | Min: {min(rewards):.2f} | Max: {max(rewards):.2f}")
+
+
 def train(policy_net, target_net, optimizer, memory, env):
     EPISODES = 10
     MAX_STEPS = 50
+    episode_rewards = []
+
+    print(f"Device: {device} | Episodes: {EPISODES} | Max steps/ep: {MAX_STEPS}")
+    print("-" * 55)
+
     for e in range(EPISODES):
         state, info = env.reset()
         state = torch.tensor(state, device=device)
         steps = 0
+        total_reward = 0.0
+        done = False
         while not done:
             action = select_action(policy_net, env, state)
             #action = env.action_space.sample()
-            observation, reward, terminated, truncated, info = env.step(action)
+            observation, reward, terminated, truncated, info = env.step(action.item())
+            total_reward += reward
             reward = torch.tensor([reward], device=device)
-            if terminated or truncated or steps > MAX_STEPS:
+            if terminated or truncated or steps >= MAX_STEPS:
                 done = True
                 # we push None next_states to buffer because bellman equation resolves to Q being simply the reward at the end (no future)
                 next_state = None
             else:
                 next_state = torch.tensor(observation, device=device)
+                steps += 1
 
             memory.push(state, action, next_state, reward)
 
@@ -146,6 +178,13 @@ def train(policy_net, target_net, optimizer, memory, env):
             for key in policy_net_state_dict:
                 target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
             target_net.load_state_dict(target_net_state_dict)
+
+        episode_rewards.append(total_reward)
+        avg = sum(episode_rewards[-10:]) / min(len(episode_rewards), 10)
+        print(f"Ep {e+1:>4}/{EPISODES} | steps: {steps:>3} | reward: {total_reward:>7.2f} | avg(10): {avg:>7.2f} | buf: {len(memory):>5}")
+
+    print("-" * 55)
+    print(f"Training done | best: {max(episode_rewards):.2f} | mean: {sum(episode_rewards)/len(episode_rewards):.2f}")
 
 def main():
 
@@ -163,5 +202,8 @@ def main():
     optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
 
     train(policy_net, target_net, optimizer, buffer, env)
+    evaluate(policy_net, env)
     env.close()
 
+if __name__ == "__main__":
+    main()
