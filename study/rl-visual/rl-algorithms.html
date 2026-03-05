@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RL Algorithms Reference</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #fafafa; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    /* ── KaTeX component ── */
+    function Tex({ math, display }) {
+      const ref = useRef(null);
+      useEffect(() => {
+        if (ref.current && window.katex) {
+          try {
+            window.katex.render(math, ref.current, {
+              throwOnError: false,
+              displayMode: !!display,
+              strict: false,
+            });
+          } catch (e) {
+            ref.current.textContent = math;
+          }
+        }
+      }, [math, display]);
+      return <span ref={ref} style={{ fontSize: display ? 14 : 13 }} />;
+    }
+
+    /* ── Algorithm data ── */
+    const algorithms = [
+      {
+        name: "Q-Learning",
+        year: 1989,
+        authors: "Watkins",
+        policy: "Deterministic (ε-greedy)",
+        actionSpace: "Discrete",
+        architecture: "Value-based (no actor)",
+        actorTex: null,
+        actorNote: "No actor — action selected as argmax over Q",
+        criticTex: "\\min_\\theta \\Big( r + \\gamma \\max_{a'} Q(s',a') - Q(s,a;\\theta) \\Big)^2",
+        criticNote: "TD error with greedy bootstrap target",
+        onOff: "Off-policy",
+        innovation: "First model-free off-policy TD control algorithm. Learns optimal Q-values directly by bootstrapping from the max over next-state actions.",
+      },
+      {
+        name: "SARSA",
+        year: 1994,
+        authors: "Rummery & Niranjan",
+        policy: "Stochastic (ε-greedy)",
+        actionSpace: "Discrete",
+        architecture: "Value-based (no actor)",
+        actorTex: null,
+        actorNote: "No actor — action sampled from ε-greedy policy",
+        criticTex: "\\min_\\theta \\Big( r + \\gamma Q(s',a';\\theta) - Q(s,a;\\theta) \\Big)^2",
+        criticNote: "TD error using the actual next action a′ taken",
+        onOff: "On-policy",
+        innovation: "On-policy variant of Q-learning. Updates Q using the action actually taken (not the max), making it safer in stochastic/dangerous environments.",
+      },
+      {
+        name: "REINFORCE",
+        year: 1992,
+        authors: "Williams",
+        policy: "Stochastic",
+        actionSpace: "Both",
+        architecture: "Policy gradient (actor only)",
+        actorTex: "\\nabla_\\theta J = \\mathbb{E}\\!\\left[\\sum_t \\nabla_\\theta \\log \\pi_\\theta(a_t|s_t) \\cdot G_t \\right]",
+        actorNote: "Monte Carlo policy gradient ascent on expected return",
+        criticTex: null,
+        criticNote: "No critic — uses raw MC returns Gₜ as signal (high variance)",
+        onOff: "On-policy",
+        innovation: "Foundational policy gradient method. Proved the policy gradient theorem enabling direct gradient ascent on expected return. High variance due to MC returns.",
+      },
+      {
+        name: "DQN",
+        year: 2013,
+        authors: "Mnih et al. (DeepMind)",
+        policy: "Deterministic (ε-greedy)",
+        actionSpace: "Discrete",
+        architecture: "Value-based (deep Q-network)",
+        actorTex: null,
+        actorNote: "No actor — action = argmax Q(s, a; θ)",
+        criticTex: "\\min_\\theta \\Big( r + \\gamma \\max_{a'} Q(s',a';\\theta^{-}) - Q(s,a;\\theta) \\Big)^2",
+        criticNote: "TD error with frozen target network θ⁻",
+        onOff: "Off-policy",
+        innovation: "First successful deep RL. Introduced experience replay buffer and frozen target networks to stabilize training. Achieved human-level Atari play.",
+      },
+      {
+        name: "A3C / A2C",
+        year: 2016,
+        authors: "Mnih et al. (DeepMind)",
+        policy: "Stochastic",
+        actionSpace: "Both",
+        architecture: "Actor-Critic",
+        actorTex: "\\nabla_\\theta J = \\mathbb{E}\\!\\left[\\nabla_\\theta \\log \\pi_\\theta(a|s) \\cdot A(s,a) \\right]",
+        actorNote: "Policy gradient weighted by advantage A = Q − V",
+        criticTex: "\\min_{\\theta_v} \\Big( G_t - V(s;\\theta_v) \\Big)^2",
+        criticNote: "Value function regression on n-step returns",
+        onOff: "On-policy",
+        innovation: "Replaced experience replay with asynchronous parallel actors (A3C). A2C is the synchronous variant. Used advantage to reduce variance.",
+      },
+      {
+        name: "TRPO",
+        year: 2015,
+        authors: "Schulman et al. (Berkeley)",
+        policy: "Stochastic",
+        actionSpace: "Both",
+        architecture: "Actor-Critic",
+        actorTex: "\\max_\\theta \\; \\mathbb{E}\\!\\left[\\frac{\\pi_\\theta(a|s)}{\\pi_{\\theta_{\\text{old}}}(a|s)} A(s,a)\\right] \\;\\;\\text{s.t.}\\;\\; D_{\\text{KL}}\\!\\left(\\pi_{\\text{old}} \\| \\pi_\\theta\\right) \\le \\delta",
+        actorNote: "Surrogate objective with KL-divergence trust region constraint",
+        criticTex: "\\min_{\\theta_v} \\Big( G_t^{\\text{GAE}} - V(s;\\theta_v) \\Big)^2",
+        criticNote: "Value regression with Generalized Advantage Estimation",
+        onOff: "On-policy",
+        innovation: "Introduced trust regions — constraining KL divergence between old/new policies for monotonic improvement guarantees. Used conjugate gradient + line search.",
+      },
+      {
+        name: "PPO",
+        year: 2017,
+        authors: "Schulman et al. (OpenAI)",
+        policy: "Stochastic",
+        actionSpace: "Both",
+        architecture: "Actor-Critic",
+        actorTex: "\\max_\\theta \\; \\mathbb{E}\\!\\left[\\min\\!\\Big( r_t(\\theta)\\hat{A}_t,\\; \\text{clip}\\big(r_t(\\theta),\\, 1\\!-\\!\\epsilon,\\, 1\\!+\\!\\epsilon\\big)\\hat{A}_t \\Big)\\right]",
+        actorNote: "Clipped surrogate objective where r(θ) = π_new / π_old",
+        criticTex: "\\min_{\\theta_v} \\Big( G_t^{\\text{GAE}} - V(s;\\theta_v) \\Big)^2",
+        criticNote: "Value regression, often also clipped for stability",
+        onOff: "On-policy",
+        innovation: "Simplified TRPO into a clipped surrogate — much easier to implement & scale. Became the standard for on-policy deep RL and RLHF.",
+      },
+      {
+        name: "DDPG",
+        year: 2015,
+        authors: "Lillicrap et al. (DeepMind)",
+        policy: "Deterministic",
+        actionSpace: "Continuous",
+        architecture: "Actor-Critic",
+        actorTex: "\\max_{\\theta_\\mu} \\; \\mathbb{E}\\!\\left[ Q\\big(s,\\, \\mu(s;\\theta_\\mu);\\, \\theta_Q\\big) \\right]",
+        actorNote: "Deterministic policy gradient — backprop through critic into actor",
+        criticTex: "\\min_{\\theta_Q} \\Big( r + \\gamma\\, Q\\big(s', \\mu(s';\\theta_\\mu^{-});\\theta_Q^{-}\\big) - Q(s,a;\\theta_Q) \\Big)^2",
+        criticNote: "Bellman error with target actor μ⁻ and target critic Q⁻",
+        onOff: "Off-policy",
+        innovation: "Extended DPG to deep networks for continuous actions. Used target networks + replay buffer. Exploration via Ornstein-Uhlenbeck noise.",
+      },
+      {
+        name: "TD3",
+        year: 2018,
+        authors: "Fujimoto et al. (McGill / Mila)",
+        policy: "Deterministic",
+        actionSpace: "Continuous",
+        architecture: "Actor-Critic (twin critics)",
+        actorTex: "\\max_{\\theta_\\mu} \\; \\mathbb{E}\\!\\left[ Q_1\\big(s,\\, \\mu(s;\\theta_\\mu);\\, \\theta_1\\big) \\right]",
+        actorNote: "Same as DDPG but with delayed (less frequent) actor updates",
+        criticTex: "\\min_{\\theta_i} \\Big( r + \\gamma \\min_{j=1,2} Q_j(s', \\tilde{a}';\\theta_j^{-}) - Q_i(s,a;\\theta_i) \\Big)^2",
+        criticNote: "Twin critics; target action smoothed: ã′ = μ⁻(s′) + clipped noise",
+        onOff: "Off-policy",
+        innovation: "Fixed DDPG's overestimation with three tricks: twin critics (take min), delayed policy updates, and target policy smoothing.",
+      },
+      {
+        name: "SAC",
+        year: 2018,
+        authors: "Haarnoja et al. (Berkeley)",
+        policy: "Stochastic",
+        actionSpace: "Continuous",
+        architecture: "Actor-Critic (twin critics + entropy)",
+        actorTex: "\\max_\\theta \\; \\mathbb{E}_{a \\sim \\pi}\\!\\left[ Q(s,a) - \\alpha \\log \\pi_\\theta(a|s) \\right]",
+        actorNote: "Maximize Q-value + entropy bonus (exploration incentive)",
+        criticTex: "\\min_{\\theta_i} \\Big( r + \\gamma\\big(\\min_{j} Q_j(s',a';\\theta_j^{-}) - \\alpha \\log \\pi(a'|s')\\big) - Q_i(s,a;\\theta_i) \\Big)^2",
+        criticNote: "Soft Bellman error — target includes entropy of next action",
+        onOff: "Off-policy",
+        innovation: "Maximum entropy RL: policy maximizes return + entropy for robust exploration. Auto-tuning of temperature α. State-of-the-art sample efficiency for continuous control.",
+      },
+      {
+        name: "IMPALA",
+        year: 2018,
+        authors: "Espeholt et al. (DeepMind)",
+        policy: "Stochastic",
+        actionSpace: "Discrete",
+        architecture: "Actor-Critic (distributed)",
+        actorTex: "\\nabla_\\theta J = \\mathbb{E}\\!\\left[\\bar{\\rho}_t \\, \\nabla_\\theta \\log \\pi_\\theta(a_t|s_t)\\, \\delta_t \\right]",
+        actorNote: "Policy gradient corrected with truncated importance weight ρ̄",
+        criticTex: "v_s = V(s) + \\sum_{t} \\left(\\prod_{i} c_i\\right) \\bar{\\rho}_t\\, \\delta_t",
+        criticNote: "V-trace target with truncated IS weights c and ρ̄",
+        onOff: "Off-policy (corrected)",
+        innovation: "Scalable distributed actor-critic. Introduced V-trace for safe off-policy correction with truncated importance sampling, enabling hundreds of parallel actors.",
+      },
+      {
+        name: "DPO",
+        year: 2023,
+        authors: "Rafailov et al. (Stanford)",
+        policy: "Stochastic (implicit)",
+        actionSpace: "N/A (LLM tokens)",
+        architecture: "Direct preference optimization",
+        actorTex: "\\max_\\theta \\; \\mathbb{E}\\!\\left[\\log \\sigma\\!\\left(\\beta \\log \\frac{\\pi_\\theta(y_w|x)}{\\pi_{\\text{ref}}(y_w|x)} - \\beta \\log \\frac{\\pi_\\theta(y_l|x)}{\\pi_{\\text{ref}}(y_l|x)}\\right)\\right]",
+        actorNote: "Binary cross-entropy on preference pairs (yᵤ preferred over yₗ)",
+        criticTex: null,
+        criticNote: "No critic — reward is implicitly defined by the policy ratio to reference",
+        onOff: "Off-policy (offline)",
+        innovation: "Eliminated the separate reward model from RLHF. Derived closed-form mapping from reward to optimal policy under KL constraint — reduces alignment to a classification loss.",
+      },
+      {
+        name: "GRPO",
+        year: 2025,
+        authors: "Shao et al. (DeepSeek)",
+        policy: "Stochastic",
+        actionSpace: "N/A (LLM tokens)",
+        architecture: "Policy gradient (critic-free)",
+        actorTex: "\\hat{A}_i = \\frac{r_i - \\bar{r}_G}{\\sigma_G}, \\quad \\max_\\theta \\; \\mathbb{E}\\!\\left[\\min\\!\\Big( \\frac{\\pi_\\theta}{\\pi_{\\text{old}}}\\hat{A}_i,\\; \\text{clip}(\\cdot)\\hat{A}_i \\Big)\\right]",
+        actorNote: "PPO-clip objective but advantage = group-normalized reward (no value net)",
+        criticTex: null,
+        criticNote: "No critic — baseline is mean reward over a group G of sampled completions",
+        onOff: "On-policy",
+        innovation: "Removed the value network from PPO for LLM training. Samples a group of completions per prompt and uses group-mean reward as baseline. Massive memory savings (used in DeepSeek-R1).",
+      },
+    ];
+
+    /* ── Tag colors ── */
+    const tagColors = {
+      "On-policy":                  { bg: "#e8f5e9", text: "#2e7d32", border: "#a5d6a7" },
+      "Off-policy":                 { bg: "#fff3e0", text: "#e65100", border: "#ffcc80" },
+      "Off-policy (corrected)":     { bg: "#fff3e0", text: "#e65100", border: "#ffcc80" },
+      "Off-policy (offline)":       { bg: "#fff3e0", text: "#e65100", border: "#ffcc80" },
+      Stochastic:                   { bg: "#e3f2fd", text: "#1565c0", border: "#90caf9" },
+      Deterministic:                { bg: "#fce4ec", text: "#c62828", border: "#ef9a9a" },
+      "Stochastic (ε-greedy)":     { bg: "#e3f2fd", text: "#1565c0", border: "#90caf9" },
+      "Deterministic (ε-greedy)":  { bg: "#fce4ec", text: "#c62828", border: "#ef9a9a" },
+      "Stochastic (implicit)":     { bg: "#e3f2fd", text: "#1565c0", border: "#90caf9" },
+      Discrete:                     { bg: "#f3e5f5", text: "#6a1b9a", border: "#ce93d8" },
+      Continuous:                   { bg: "#e0f7fa", text: "#00695c", border: "#80cbc4" },
+      Both:                         { bg: "#f1f8e9", text: "#33691e", border: "#aed581" },
+      "N/A (LLM tokens)":          { bg: "#f5f5f5", text: "#616161", border: "#bdbdbd" },
+    };
+
+    function Tag({ label }) {
+      const style = tagColors[label] || { bg: "#f5f5f5", text: "#616161", border: "#bdbdbd" };
+      return (
+        <span style={{
+          display: "inline-block", padding: "2px 10px", borderRadius: "999px",
+          fontSize: "11px", fontWeight: 600, letterSpacing: "0.02em",
+          background: style.bg, color: style.text, border: `1px solid ${style.border}`, whiteSpace: "nowrap",
+        }}>
+          {label}
+        </span>
+      );
+    }
+
+    function Label({ children, accent }) {
+      return (
+        <div style={{
+          fontSize: 10, fontWeight: 700, textTransform: "uppercase",
+          letterSpacing: "0.08em", color: accent ? "#e65100" : "#aaa", marginBottom: 8,
+        }}>
+          {children}
+        </div>
+      );
+    }
+
+    /* ── Main App ── */
+    function App() {
+      const [expanded, setExpanded] = useState(null);
+      const [filter, setFilter] = useState("All");
+      const filters = ["All", "On-policy", "Off-policy", "Actor-Critic", "Value-based", "Continuous", "Discrete"];
+
+      const filtered = algorithms.filter((a) => {
+        if (filter === "All") return true;
+        if (filter === "On-policy") return a.onOff === "On-policy";
+        if (filter === "Off-policy") return a.onOff.startsWith("Off-policy");
+        if (filter === "Actor-Critic") return a.architecture.toLowerCase().includes("actor-critic");
+        if (filter === "Value-based") return a.architecture.toLowerCase().includes("value-based");
+        if (filter === "Continuous") return a.actionSpace === "Continuous" || a.actionSpace === "Both";
+        if (filter === "Discrete") return a.actionSpace === "Discrete" || a.actionSpace === "Both";
+        return true;
+      });
+
+      return (
+        <div style={{ fontFamily: "'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif", background: "#fafafa", minHeight: "100vh", padding: "32px 24px" }}>
+          <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+            <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1a1a1a", marginBottom: 4, letterSpacing: "-0.02em" }}>
+              Reinforcement Learning Algorithms
+            </h1>
+            <p style={{ fontSize: 14, color: "#888", marginBottom: 24 }}>
+              A comparative reference of landmark RL methods — click any row to expand details
+            </p>
+
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+              {filters.map((f) => (
+                <button key={f} onClick={() => setFilter(f)} style={{
+                  padding: "6px 16px", borderRadius: 999,
+                  border: filter === f ? "2px solid #1a1a1a" : "1px solid #ddd",
+                  background: filter === f ? "#1a1a1a" : "#fff",
+                  color: filter === f ? "#fff" : "#555",
+                  fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.15s",
+                }}>
+                  {f}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {filtered.map((algo) => {
+                const isOpen = expanded === algo.name;
+                return (
+                  <div key={algo.name} onClick={() => setExpanded(isOpen ? null : algo.name)} style={{
+                    background: "#fff", borderRadius: 12,
+                    border: isOpen ? "2px solid #1a1a1a" : "1px solid #e5e5e5",
+                    cursor: "pointer", transition: "all 0.2s ease", overflow: "hidden",
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 20px", flexWrap: "wrap" }}>
+                      <span style={{ fontWeight: 700, fontSize: 15, color: "#1a1a1a", letterSpacing: "-0.01em", minWidth: 100 }}>{algo.name}</span>
+                      <span style={{ fontSize: 13, color: "#999", fontVariantNumeric: "tabular-nums", minWidth: 36 }}>{algo.year}</span>
+                      <span style={{ fontSize: 12, color: "#777", flex: 1, minWidth: 100 }}>{algo.authors}</span>
+                      <Tag label={algo.policy} />
+                      <Tag label={algo.actionSpace} />
+                      <Tag label={algo.onOff} />
+                      <span style={{ fontSize: 18, color: "#bbb", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", marginLeft: 4 }}>▾</span>
+                    </div>
+
+                    {isOpen && (
+                      <div onClick={(e) => e.stopPropagation()} style={{
+                        padding: "0 20px 24px", display: "grid", gridTemplateColumns: "1fr 1fr",
+                        gap: 20, borderTop: "1px solid #f0f0f0", paddingTop: 20, cursor: "default",
+                      }}>
+                        <div>
+                          <Label>Architecture</Label>
+                          <p style={{ fontSize: 13, color: "#444", lineHeight: 1.6, margin: 0 }}>{algo.architecture}</p>
+                        </div>
+                        <div>
+                          <Label accent>Key Innovation</Label>
+                          <p style={{ fontSize: 13, color: "#444", lineHeight: 1.6, margin: 0 }}>{algo.innovation}</p>
+                        </div>
+                        <div>
+                          <Label>Actor Objective</Label>
+                          {algo.actorTex ? (
+                            <div style={{ background: "#f8f6ff", border: "1px solid #e8e0f5", borderRadius: 8, padding: "12px 14px", overflowX: "auto" }}>
+                              <Tex math={algo.actorTex} display />
+                              <p style={{ fontSize: 11, color: "#888", margin: "8px 0 0", lineHeight: 1.4 }}>{algo.actorNote}</p>
+                            </div>
+                          ) : (
+                            <div style={{ background: "#f8f8f8", borderRadius: 8, padding: "12px 14px" }}>
+                              <p style={{ fontSize: 13, color: "#999", margin: 0, fontStyle: "italic" }}>{algo.actorNote}</p>
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <Label>Critic Objective</Label>
+                          {algo.criticTex ? (
+                            <div style={{ background: "#f6faff", border: "1px solid #dce8f5", borderRadius: 8, padding: "12px 14px", overflowX: "auto" }}>
+                              <Tex math={algo.criticTex} display />
+                              <p style={{ fontSize: 11, color: "#888", margin: "8px 0 0", lineHeight: 1.4 }}>{algo.criticNote}</p>
+                            </div>
+                          ) : (
+                            <div style={{ background: "#f8f8f8", borderRadius: 8, padding: "12px 14px" }}>
+                              <p style={{ fontSize: 13, color: "#999", margin: 0, fontStyle: "italic" }}>{algo.criticNote}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <p style={{ fontSize: 11, color: "#bbb", marginTop: 24, textAlign: "center" }}>
+              {filtered.length} of {algorithms.length} algorithms shown
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
