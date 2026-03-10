@@ -1,0 +1,54 @@
+base_model: "Qwen/Qwen3-4B-Instruct-2507"
+max_seq_length: 32768
+
+system_prompt: |
+  You are a highly skilled legal research assistant specialized in North American law.
+  Your task is to summarize the following legal case into a comprehensive brief.
+  Focus on the procedural history, key facts, legal issues, and the court's holding.
+
+lora:
+  r: 64
+  alpha: 32
+  dropout: 0.0
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+
+dataset:
+  name: "CJWeiss/LexSumm"
+  config: "multilong"
+  input_col: "input"
+  output_col: "output"
+
+training:
+  per_device_batch_size: 1
+  grad_accum_steps: 8
+  learning_rate: 1.0e-4
+  num_epochs: 1
+  warmup_steps: 100
+  save_steps: 200
+  eval_steps: 200
+  max_steps: -1  # -1 = use num_epochs
+  weight_decay: 0.01
+  lr_scheduler: "cosine"
+  logging_steps: 10
+  seed: 3407
+
+eval:
+  expected_sections:
+    - "Procedural History"
+    - "Key Facts"
+    - "Legal Issues"
+    - "Holding"
+
+hub:
+  repo: "YOUR_USERNAME/qwen-legal-summary"
+  push_checkpoints: false
+
+wandb:
+  project: "legal-summary"
