@@ -1,0 +1,134 @@
+# =============================================================================
+# Training Configuration
+# =============================================================================
+# Copy this file and modify for each training run:
+#   cp configs/example_train_config.yaml configs/my_run.yaml
+#
+# Start training:
+#   bash launch_train.sh configs/my_run.yaml
+# =============================================================================
+
+# --- Model ---
+# HuggingFace model ID for the base model to fine-tune
+base_model: "Qwen/Qwen3-4B-Instruct-2507"
+
+# Maximum sequence length in tokens. Longer = more context but more VRAM.
+# 32768 is safe on H100. Reduce to 16384 if you hit OOM.
+max_seq_length: 32768
+
+# --- System Prompt ---
+# The instruction given to the model during training. This shapes how
+# the model learns to respond. Keep it consistent with eval/inference.
+system_prompt: |
+  You are a highly skilled legal research assistant specialized in North American law.
+  Your task is to summarize the following legal case into a comprehensive brief.
+  Focus on the procedural history, key facts, legal issues, and the court's holding.
+
+# --- LoRA Configuration ---
+# Low-Rank Adaptation parameters. Only these adapter weights are trained,
+# not the full model, keeping checkpoints small (~250MB).
+lora:
+  # Rank of the low-rank matrices. Higher = more capacity but more VRAM.
+  # 16 is conservative, 64 is aggressive. 32-64 recommended for complex tasks.
+  r: 64
+
+  # Scaling factor. Controls how much the adapter affects the base model.
+  # Common choices: alpha = r (full strength) or alpha = r/2.
+  alpha: 32
+
+  # Dropout on LoRA layers. 0.0 for small datasets, 0.05 for larger ones.
+  dropout: 0.0
+
+  # Which model layers to apply LoRA to. Targeting all linear layers
+  # gives the best results for complex reasoning tasks.
+  target_modules:
+    - q_proj    # query projection (attention)
+    - k_proj    # key projection (attention)
+    - v_proj    # value projection (attention)
+    - o_proj    # output projection (attention)
+    - gate_proj # MLP gate
+    - up_proj   # MLP up projection
+    - down_proj # MLP down projection
+
+# --- Dataset ---
+# HuggingFace dataset to train on. Change these to use a different dataset.
+dataset:
+  # Dataset name on HuggingFace Hub
+  name: "CJWeiss/LexSumm"
+
+  # Dataset subset/configuration (null if none)
+  config: "multilong"
+
+  # Column name containing the input text (the document to summarize)
+  input_col: "input"
+
+  # Column name containing the target output (the reference summary)
+  output_col: "output"
+
+# --- Training Hyperparameters ---
+training:
+  # Batch size per GPU. With long sequences, 1 is usually the max.
+  # Effective batch = per_device_batch_size * grad_accum_steps * num_gpus
+  per_device_batch_size: 1
+
+  # Gradient accumulation steps. Increases effective batch size without
+  # more VRAM. 8 with 4 GPUs = effective batch of 32.
+  grad_accum_steps: 8
+
+  # Peak learning rate. 1e-4 is standard for LoRA fine-tuning.
+  # Lower (5e-5) if training is unstable, higher (2e-4) if underfitting.
+  learning_rate: 1.0e-4
+
+  # Number of full passes through the dataset.
+  num_epochs: 1
+
+  # Number of steps with linearly increasing LR at the start.
+  # Helps stabilize early training. 100-200 is typical.
+  warmup_steps: 100
+
+  # Save a checkpoint every N steps. LoRA checkpoints are ~250MB each.
+  save_steps: 200
+
+  # Run evaluation on validation set every N steps.
+  eval_steps: 200
+
+  # Max training steps. -1 = train for num_epochs. Set to a positive
+  # number to cap training early (useful for debugging).
+  max_steps: -1
+
+  # L2 regularization. 0.01 is standard, increase if overfitting.
+  weight_decay: 0.01
+
+  # Learning rate schedule. "cosine" decays smoothly to 0.
+  # Other options: "linear", "constant", "constant_with_warmup"
+  lr_scheduler: "cosine"
+
+  # Print training loss every N steps.
+  logging_steps: 10
+
+  # Random seed for reproducibility.
+  seed: 3407
+
+# --- Eval Format ---
+# Expected sections in generated summaries. Used by evaluate.py to
+# measure format compliance.
+eval:
+  expected_sections:
+    - "Procedural History"
+    - "Key Facts"
+    - "Legal Issues"
+    - "Holding"
+
+# --- HuggingFace Hub ---
+# Push checkpoints to HF Hub for backup/sharing.
+hub:
+  # Your HF Hub repo. Create it first: huggingface-cli repo create qwen-legal-summary
+  repo: "YOUR_USERNAME/qwen-legal-summary"
+
+  # Set to true to auto-push after training. Requires HF_TOKEN in .env.
+  push_checkpoints: false
+
+# --- Weights & Biases ---
+wandb:
+  # WandB project name. All runs (train + eval) log here.
+  project: "legal-summary"

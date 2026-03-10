@@ -1,0 +1,76 @@
+# =============================================================================
+# Prompt Evaluation Configuration
+# =============================================================================
+# Defines which checkpoint + system prompt + dataset to evaluate.
+# Each eval run creates a numbered directory under prompt_results/.
+#
+# Run evaluation:
+#   python evaluate.py --config configs/example_prompt_eval_config.yaml
+#
+# Or with Claude-as-judge:
+#   python evaluate.py --config configs/example_prompt_eval_config.yaml --llm_judge
+# =============================================================================
+
+# --- Checkpoint ---
+# Path to a LoRA checkpoint directory, or a HuggingFace model ID.
+#
+# Examples:
+#   Local LoRA checkpoint:
+#     checkpoint: "train_results/001/checkpoints/checkpoint-400"
+#   Final checkpoint from a training run:
+#     checkpoint: "train_results/001/checkpoints/final"
+#   Base model (no fine-tuning, for baseline comparison):
+#     checkpoint: "Qwen/Qwen3-4B-Instruct-2507"
+checkpoint: "train_results/001/checkpoints/checkpoint-400"
+
+# --- System Prompt ---
+# The instruction given to the model. This is what you're testing --
+# try different prompts with the same checkpoint to see which produces
+# better summaries.
+#
+# Can also be a path to a .txt file containing the prompt:
+#   system_prompt: "prompts/legal_brief_v2.txt"
+system_prompt: |
+  You are a highly skilled legal research assistant specialized in North American law.
+  Your task is to summarize the following legal case into a comprehensive brief.
+
+  Structure your summary with these sections:
+  - Procedural History
+  - Key Facts
+  - Legal Issues
+  - Holding
+
+  Be thorough but concise. Use formal legal language.
+
+# --- Dataset ---
+# Which dataset and how many samples to evaluate on.
+dataset:
+  # HuggingFace dataset name
+  name: "CJWeiss/LexSumm"
+
+  # Dataset subset (null if none)
+  config: "multilong"
+
+  # Number of validation samples to evaluate. More = more reliable scores
+  # but slower. 20 for quick checks, 50+ for proper comparison.
+  num_samples: 50
+
+# --- Generation Parameters ---
+# Controls how the model generates text during evaluation.
+generation:
+  # Maximum tokens to generate per summary. Legal briefs can be long,
+  # 2048 is usually enough. Increase if summaries are getting cut off.
+  max_new_tokens: 2048
+
+  # Sampling temperature. 0 = deterministic (greedy), 0.6 = slightly creative.
+  # Lower is more consistent for benchmarking. Higher for more varied output.
+  temperature: 0.6
+
+# --- Format Compliance ---
+# Expected sections to check for in generated summaries.
+# Used by tier 2 eval to measure structural compliance.
+expected_sections:
+  - "Procedural History"
+  - "Key Facts"
+  - "Legal Issues"
+  - "Holding"

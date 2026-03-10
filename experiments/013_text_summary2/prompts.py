@@ -1,12 +1,49 @@
 """Shared prompt template logic used by train, evaluate, and infer."""
 
-import yaml
+import os
 from pathlib import Path
+
+import yaml
+
+
+def load_env(project_dir: Path | None = None):
+    """Load .env file from project directory into os.environ.
+
+    Doesn't overwrite variables that are already set, so real env vars
+    take precedence over .env values.
+    """
+    if project_dir is None:
+        project_dir = Path(__file__).resolve().parent
+    env_file = project_dir / ".env"
+    if not env_file.exists():
+        return
+    for line in env_file.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip().strip("\"'")
+        if key and key not in os.environ:
+            os.environ[key] = value
 
 
 def load_config(config_path: str) -> dict:
     with open(config_path, "r") as f:
         return yaml.safe_load(f)
+
+
+def resolve_prompt(value: str) -> str:
+    """Resolve a system prompt value.
+
+    If ``value`` looks like a file path that exists, read and return its
+    contents.  Otherwise return the string as-is. This lets CLI args like
+    ``--system_prompt prompts/legal_v2.txt`` work alongside inline strings.
+    """
+    candidate = Path(value)
+    if candidate.is_file():
+        return candidate.read_text(encoding="utf-8").strip()
+    return value.strip()
 
 
 def build_messages(system_prompt: str, user_text: str) -> list[dict]:

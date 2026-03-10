@@ -1,9 +1,15 @@
 """Config-driven multi-GPU training for legal summarization with DeepSpeed ZeRO-2.
 
 Usage:
+    # See all options
+    python train.py --help
+
+    # Train with a config file (multi-GPU via accelerate)
     accelerate launch --num_processes=4 --mixed_precision=bf16 \
-        experiments/013_text_summary2/train.py \
-        --config experiments/013_text_summary2/configs/default.yaml
+        train.py --config configs/default.yaml
+
+    # Convenience launcher (auto-detects GPUs)
+    bash launch_train.sh configs/default.yaml
 """
 
 import argparse
@@ -29,13 +35,44 @@ PROJECT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_DIR))
 
 from data import load_and_prepare
-from prompts import get_next_run_dir, load_config
+from prompts import get_next_run_dir, load_config, load_env
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, required=True, help="Path to YAML config file")
-    parser.add_argument("--local_rank", type=int, default=-1, help="Set by DeepSpeed/accelerate")
+    parser = argparse.ArgumentParser(
+        description="Fine-tune a language model on legal summarization data.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Single-config training (most common)
+  bash launch_train.sh configs/default.yaml
+
+  # Specify GPU count
+  bash launch_train.sh configs/default.yaml 4
+
+  # Direct accelerate launch
+  accelerate launch --num_processes=4 --mixed_precision=bf16 \\
+      train.py --config configs/my_run.yaml
+
+Config reference:
+  See configs/example_train_config.yaml for all available options
+  with detailed comments explaining each parameter.
+
+Outputs:
+  train_results/NNN/config.yaml      Frozen copy of your config
+  train_results/NNN/checkpoints/     LoRA adapter checkpoints
+  train_results/NNN/summary.txt      Training metrics and metadata
+  train_results/NNN/wandb_run_id.txt WandB run ID for cross-reference
+""",
+    )
+    parser.add_argument(
+        "--config", type=str, required=True,
+        help="Path to YAML training config file (see configs/example_train_config.yaml)",
+    )
+    parser.add_argument(
+        "--local_rank", type=int, default=-1,
+        help="(Internal) Set automatically by DeepSpeed/accelerate. Do not set manually.",
+    )
     return parser.parse_args()
 
 
@@ -108,6 +145,7 @@ def write_summary(run_dir: Path, config: dict, trainer, train_result, start_time
 
 def main():
     args = parse_args()
+    load_env(PROJECT_DIR)
     config = load_config(args.config)
 
     run_dir = get_next_run_dir(PROJECT_DIR / "train_results")

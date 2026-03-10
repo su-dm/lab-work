@@ -1,0 +1,6 @@
+.env
+train_results/*/checkpoints/
+train_results/*/wandb_run_id.txt
+prompt_results/*/generated/
+prompt_results/*/.hub_pushed
+train_results/*/.hub_pushed

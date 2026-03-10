@@ -1,23 +1,7 @@
 """Multi-tier evaluation for legal summarization checkpoints and prompts.
 
-Supports four evaluation tiers:
-  1. Overlap metrics (ROUGE, BERTScore)
-  2. Format compliance (section presence, length analysis)
-  3. NLI faithfulness (hallucination detection)
-  4. LLM-as-judge via Claude API
-
 Usage:
-    # From a prompt_config.yaml
-    python evaluate.py --config prompt_results/001/prompt_config.yaml
-
-    # Inline args (auto-creates next prompt_results/NNN/ dir)
-    python evaluate.py \
-        --checkpoint train_results/001/checkpoints/checkpoint-400 \
-        --system_prompt "You are a legal assistant..." \
-        --num_samples 50
-
-    # Enable Claude-as-judge (costs API credits)
-    python evaluate.py --config prompt_results/001/prompt_config.yaml --llm_judge
+    python evaluate.py --help
 """
 
 import argparse
@@ -42,7 +26,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 PROJECT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_DIR))
 
-from prompts import build_messages, get_next_run_dir
+from prompts import build_messages, get_next_run_dir, load_env, resolve_prompt
 
 
 # ---------------------------------------------------------------------------
@@ -50,20 +34,65 @@ from prompts import build_messages, get_next_run_dir
 # ---------------------------------------------------------------------------
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Evaluate legal summarization checkpoint")
-    parser.add_argument("--config", type=str, help="Path to prompt_config.yaml")
-    parser.add_argument("--checkpoint", type=str, help="Path to LoRA checkpoint or HF model ID")
-    parser.add_argument("--system_prompt", type=str, help="System prompt text")
-    parser.add_argument("--num_samples", type=int, default=50)
-    parser.add_argument("--max_new_tokens", type=int, default=2048)
-    parser.add_argument("--temperature", type=float, default=0.6)
-    parser.add_argument("--dataset_name", type=str, default="CJWeiss/LexSumm")
-    parser.add_argument("--dataset_config", type=str, default="multilong")
-    parser.add_argument("--llm_judge", action="store_true", help="Enable Claude-as-judge (tier 4)")
-    parser.add_argument("--no_wandb", action="store_true")
-    parser.add_argument("--wandb_project", type=str, default="legal-summary")
+    parser = argparse.ArgumentParser(
+        description="Evaluate a checkpoint + system prompt against a dataset with multi-tier scoring.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Evaluation tiers:
+  1. Overlap metrics    ROUGE-1/2/L, BERTScore (always runs)
+  2. Format compliance  Section presence, length stats, extractive coverage
+  3. Faithfulness       NLI-based hallucination detection
+  4. LLM-as-judge      Claude rates accuracy/completeness/format/conciseness
+                        (opt-in via --llm_judge, requires ANTHROPIC_API_KEY)
+
+Examples:
+  # Quick eval from CLI args (auto-creates prompt_results/NNN/)
+  python evaluate.py \\
+      --checkpoint train_results/001/checkpoints/checkpoint-400 \\
+      --system_prompt prompts/legal_brief.txt \\
+      --num_samples 20
+
+  # From a config file
+  python evaluate.py --config prompt_results/001/prompt_config.yaml
+
+  # With Claude-as-judge
+  python evaluate.py --config prompt_results/001/prompt_config.yaml --llm_judge
+
+Config reference:
+  See configs/example_prompt_eval_config.yaml for all options.
+""",
+    )
+    parser.add_argument(
+        "--config", type=str,
+        help="Path to prompt_config.yaml (alternative to inline args)",
+    )
+    parser.add_argument(
+        "--checkpoint", type=str,
+        help="Path to LoRA checkpoint dir, or HuggingFace model ID for base model",
+    )
+    parser.add_argument(
+        "--system_prompt", type=str,
+        help="System prompt: inline text OR path to a .txt file containing the prompt",
+    )
+    parser.add_argument("--num_samples", type=int, default=50,
+                        help="Number of validation samples to evaluate (default: 50)")
+    parser.add_argument("--max_new_tokens", type=int, default=2048,
+                        help="Max tokens to generate per summary (default: 2048)")
+    parser.add_argument("--temperature", type=float, default=0.6,
+                        help="Sampling temperature (default: 0.6)")
+    parser.add_argument("--dataset_name", type=str, default="CJWeiss/LexSumm",
+                        help="HuggingFace dataset name (default: CJWeiss/LexSumm)")
+    parser.add_argument("--dataset_config", type=str, default="multilong",
+                        help="Dataset configuration/subset (default: multilong)")
+    parser.add_argument("--llm_judge", action="store_true",
+                        help="Enable Claude-as-judge tier 4 eval (costs API credits)")
+    parser.add_argument("--no_wandb", action="store_true",
+                        help="Disable WandB logging")
+    parser.add_argument("--wandb_project", type=str, default="legal-summary",
+                        help="WandB project name (default: legal-summary)")
     parser.add_argument("--expected_sections", nargs="+",
-                        default=["Procedural History", "Key Facts", "Legal Issues", "Holding"])
+                        default=["Procedural History", "Key Facts", "Legal Issues", "Holding"],
+                        help="Section headings to check for in format compliance")
     return parser.parse_args()
 
 
@@ -74,9 +103,10 @@ def load_eval_config(args) -> dict:
         with open(args.config) as f:
             cfg = yaml.safe_load(f)
 
+    raw_prompt = args.system_prompt or cfg.get("system_prompt", "You are a legal assistant.")
     return {
         "checkpoint": args.checkpoint or cfg.get("checkpoint", ""),
-        "system_prompt": args.system_prompt or cfg.get("system_prompt", "You are a legal assistant."),
+        "system_prompt": resolve_prompt(raw_prompt),
         "dataset_name": args.dataset_name if args.dataset_name != "CJWeiss/LexSumm"
                         else cfg.get("dataset", {}).get("name", "CJWeiss/LexSumm"),
         "dataset_config": args.dataset_config if args.dataset_config != "multilong"
@@ -434,6 +464,7 @@ def write_summary(run_dir: Path, eval_cfg: dict, metrics: dict,
 
 def main():
     args = parse_args()
+    load_env(PROJECT_DIR)
     eval_cfg = load_eval_config(args)
 
     if not eval_cfg["checkpoint"]:
