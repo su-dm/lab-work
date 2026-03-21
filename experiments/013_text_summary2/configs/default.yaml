@@ -1,14 +1,12 @@
-base_model: "Qwen/Qwen3-4B-Instruct-2507"
-max_seq_length: 32768
+base_model: "Qwen/Qwen3.5-4B"
+max_seq_length: 131072
 
 system_prompt: |
-  You are a highly skilled legal research assistant specialized in North American law.
-  Your task is to summarize the following legal case into a comprehensive brief.
-  Focus on the procedural history, key facts, legal issues, and the court's holding.
+  You are a legal research assistant. Summarize the following legal case.
 
 lora:
   r: 64
-  alpha: 32
+  alpha: 64
   dropout: 0.0
   target_modules:
     - q_proj

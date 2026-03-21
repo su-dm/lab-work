@@ -136,7 +136,7 @@ python infer.py \
 
 # Base model (no adapter) for comparison
 python infer.py \
-    --model "Qwen/Qwen3-4B-Instruct-2507" \
+    --model "Qwen/Qwen3.5-4B" \
     --system_prompt "You are a legal assistant." \
     --input document.txt
 

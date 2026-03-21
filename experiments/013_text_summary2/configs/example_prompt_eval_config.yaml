@@ -20,7 +20,7 @@
 #   Final checkpoint from a training run:
 #     checkpoint: "train_results/001/checkpoints/final"
 #   Base model (no fine-tuning, for baseline comparison):
-#     checkpoint: "Qwen/Qwen3-4B-Instruct-2507"
+#     checkpoint: "Qwen/Qwen3.5-4B"
 checkpoint: "train_results/001/checkpoints/checkpoint-400"
 
 # --- System Prompt ---
@@ -31,16 +31,7 @@ checkpoint: "train_results/001/checkpoints/checkpoint-400"
 # Can also be a path to a .txt file containing the prompt:
 #   system_prompt: "prompts/legal_brief_v2.txt"
 system_prompt: |
-  You are a highly skilled legal research assistant specialized in North American law.
-  Your task is to summarize the following legal case into a comprehensive brief.
-
-  Structure your summary with these sections:
-  - Procedural History
-  - Key Facts
-  - Legal Issues
-  - Holding
-
-  Be thorough but concise. Use formal legal language.
+  You are a legal research assistant. Summarize the following legal case.
 
 # --- Dataset ---
 # Which dataset and how many samples to evaluate on.

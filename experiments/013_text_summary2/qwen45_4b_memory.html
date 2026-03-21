@@ -1,0 +1,467 @@
+
+<style>
+  .card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:12px}
+  .card-title{font-size:15px;font-weight:500;margin:0 0 4px}
+  .card-sub{font-size:12px;color:var(--color-text-secondary);margin:0 0 12px}
+  .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px}
+  .bar-label{width:180px;color:var(--color-text-secondary);flex-shrink:0;font-size:11px}
+  .bar-track{flex:1;background:var(--color-background-tertiary);border-radius:3px;height:14px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:3px;transition:width .4s ease}
+  .bar-val{width:72px;text-align:right;color:var(--color-text-primary);font-weight:500;font-size:12px;flex-shrink:0}
+  .mg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+  .mg2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+  .met{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px 10px}
+  .ml{font-size:11px;color:var(--color-text-secondary);margin:0 0 2px}
+  .mv{font-size:15px;font-weight:500;color:var(--color-text-primary);margin:0}
+  .mv-big{font-size:20px;font-weight:500;color:var(--color-text-primary);margin:0}
+  .sr{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px}
+  .sr label{width:160px;color:var(--color-text-secondary);flex-shrink:0}
+  .sr input{flex:1}
+  .sr span{width:72px;text-align:right;font-weight:500;font-size:12px;color:var(--color-text-primary)}
+  .tab-bar{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+  .tab{padding:6px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);font-size:12px;cursor:pointer;background:transparent;color:var(--color-text-secondary);transition:all .15s}
+  .tab.active{background:var(--color-background-secondary);color:var(--color-text-primary);border-color:var(--color-border-primary);font-weight:500}
+  .fr{font-size:11px;color:var(--color-text-tertiary);font-family:var(--font-mono);background:var(--color-background-secondary);border-radius:4px;padding:4px 8px;margin-bottom:4px}
+  .tbar{height:20px;border-radius:4px;display:flex;overflow:hidden;margin:8px 0}
+  .tseg{height:100%;transition:width .4s ease}
+  .lr{display:flex;flex-wrap:wrap;gap:8px;font-size:11px;color:var(--color-text-secondary);margin-bottom:10px}
+  .ld{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:3px;vertical-align:middle}
+  .wb{background:var(--color-background-warning);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:8px 12px;font-size:12px;color:var(--color-text-warning);margin-bottom:10px}
+  .ib{background:var(--color-background-info);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:8px 12px;font-size:12px;color:var(--color-text-info);margin-bottom:10px}
+  .sb{background:var(--color-background-success);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:8px 12px;font-size:12px;color:var(--color-text-success);margin-bottom:10px}
+  .st{font-size:12px;font-weight:500;color:var(--color-text-secondary);margin:0 0 6px}
+  .gc{display:inline-block;font-size:11px;padding:3px 8px;border-radius:4px;margin:2px}
+  .gc.ok{background:var(--color-background-success);color:var(--color-text-success)}
+  .gc.warn{background:var(--color-background-warning);color:var(--color-text-warning)}
+  .tg-btn{padding:4px 10px;border-radius:6px;border:0.5px solid var(--color-border-secondary);font-size:11px;cursor:pointer;background:transparent;color:var(--color-text-secondary)}
+  .tg-btn.active{background:var(--color-background-secondary);color:var(--color-text-primary);font-weight:500}
+  .arch-row{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:11px}
+  .arch-badge{border-radius:4px;padding:2px 8px;font-size:10px;font-weight:500;flex-shrink:0;width:100px;text-align:center}
+  .badge-delta{background:var(--color-background-info);color:var(--color-text-info)}
+  .badge-attn{background:var(--color-background-warning);color:var(--color-text-warning)}
+  .divider{border:none;border-top:0.5px solid var(--color-border-tertiary);margin:10px 0}
+  .zero-row{display:flex;gap:8px;margin-bottom:6px;font-size:11px}
+  .zero-label{width:140px;color:var(--color-text-secondary);flex-shrink:0}
+  .zero-val{font-weight:500;color:var(--color-text-primary)}
+  .zero-note{color:var(--color-text-tertiary);font-style:italic}
+</style>
+
+<div style="padding:1rem 0">
+<div class="tab-bar">
+  <button class="tab active" onclick="setTab(0)">Architecture</button>
+  <button class="tab" onclick="setTab(1)">Fine-tuning</button>
+  <button class="tab" onclick="setTab(2)">Pre-training</button>
+</div>
+
+<!-- ARCHITECTURE TAB -->
+<div id="p0">
+  <div class="card">
+    <p class="card-title">Qwen3.5-4B hybrid layer breakdown</p>
+    <p class="card-sub">32 layers total: 24 DeltaNet (linear O(1) in seq) + 8 Gated Attention (quadratic O(seq²))</p>
+    <div id="arch-layers"></div>
+  </div>
+  <div class="card">
+    <p class="card-title">Why this matters for attention memory</p>
+    <div class="fr">Gated Attention score matrix: batch × Q_heads × seq × seq × 2 bytes</div>
+    <div class="fr">Gated DeltaNet state matrix: batch × QK_heads × head_dim × head_dim × 2 bytes  [O(1) in seq!]</div>
+    <div class="fr">At seq=262144: Attention score per layer = batch × 16 × 262144² × 2 ≈ massive</div>
+    <div class="fr">DeltaNet state per layer = batch × 16 × 128 × 128 × 2 = 0.53 MB  [constant!]</div>
+    <div style="margin-top:10px">
+      <div class="sr">
+        <label>Sequence length</label>
+        <input type="range" min="512" max="262144" step="512" value="8192" id="arch-sl" oninput="updateArch()">
+        <span id="arch-sl-val">8,192</span>
+      </div>
+      <div class="sr">
+        <label>Batch size</label>
+        <input type="range" min="1" max="8" step="1" value="1" id="arch-bs" oninput="updateArch()">
+        <span id="arch-bs-val">1</span>
+      </div>
+    </div>
+    <div class="mg">
+      <div class="met"><p class="ml">Naive attn memory (8 layers)</p><p class="mv" id="arch-naive">—</p></div>
+      <div class="met"><p class="ml">DeltaNet states (24 layers)</p><p class="mv" id="arch-delta">—</p></div>
+      <div class="met"><p class="ml">Flash attn saves</p><p class="mv" id="arch-save">—</p></div>
+    </div>
+    <div style="margin-top:10px" id="arch-warn"></div>
+  </div>
+  <div class="card">
+    <p class="card-title">Attention head comparison</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div>
+        <p class="st">Gated Attention (8 layers)</p>
+        <div class="fr">Q heads: 16  ·  head_dim: 256</div>
+        <div class="fr">KV heads: 4  (GQA 4:1)</div>
+        <div class="fr">RoPE dim: 64</div>
+        <div class="fr">Score matrix: seq × seq per Q head</div>
+      </div>
+      <div>
+        <p class="st">Gated DeltaNet (24 layers)</p>
+        <div class="fr">V heads: 32  ·  QK heads: 16</div>
+        <div class="fr">Head dim: 128</div>
+        <div class="fr">State: head_dim × head_dim per head</div>
+        <div class="fr">Memory: O(d²) — constant in seq!</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FINE-TUNING TAB -->
+<div id="p1" style="display:none">
+  <div class="card" style="background:var(--color-background-secondary)">
+    <p class="st">Parameters</p>
+    <div class="sr">
+      <label>Sequence length</label>
+      <input type="range" min="512" max="262144" step="512" value="4096" id="ft-sl" oninput="updateFT()">
+      <span id="ft-sl-val">4,096</span>
+    </div>
+    <div class="sr">
+      <label>Batch size</label>
+      <input type="range" min="1" max="16" step="1" value="2" id="ft-bs" oninput="updateFT()">
+      <span id="ft-bs-val">2</span>
+    </div>
+    <div class="sr">
+      <label>LoRA rank</label>
+      <input type="range" min="4" max="128" step="4" value="16" id="ft-rank" oninput="updateFT()">
+      <span id="ft-rank-val">16</span>
+    </div>
+    <div style="margin-top:6px">
+      <p class="st">Method</p>
+      <div style="display:flex;gap:4px">
+        <button class="tg-btn active" id="btn-qlora" onclick="setMethod('qlora')">QLoRA</button>
+        <button class="tg-btn" id="btn-lora" onclick="setMethod('lora')">LoRA</button>
+        <button class="tg-btn" id="btn-full" onclick="setMethod('full')">Full</button>
+      </div>
+    </div>
+  </div>
+  <div id="ft-alert"></div>
+  <div class="card">
+    <p class="card-title" id="ft-title">—</p>
+    <p class="card-sub" id="ft-sub">—</p>
+    <div class="lr" id="ft-legend"></div>
+    <div class="tbar" id="ft-tbar"></div>
+    <div id="ft-bars"></div>
+    <div class="mg">
+      <div class="met"><p class="ml">Total VRAM needed</p><p class="mv-big" id="ft-total">—</p></div>
+      <div class="met"><p class="ml">Attn memory (naive)</p><p class="mv" id="ft-naive">—</p></div>
+      <div class="met"><p class="ml">Attn w/ Flash Attn</p><p class="mv" id="ft-flash">—</p></div>
+    </div>
+    <div style="margin-top:8px" id="ft-gpus"></div>
+  </div>
+  <div class="card">
+    <p class="card-title">Corrected attention formula for this model</p>
+    <div class="fr">Only 8/32 layers are quadratic attention (Gated Attention layers)</div>
+    <div class="fr" id="ft-attn-f1">Naive: batch × 16 Q_heads × seq² × 2 bytes × 8 layers</div>
+    <div class="fr" id="ft-attn-f2">DeltaNet: batch × 16 QK_heads × 128² × 2 bytes × 24 layers = constant</div>
+    <div class="fr">Flash Attn activations: batch × seq × hidden(2560) × layers(32) × 2 bytes</div>
+  </div>
+</div>
+
+<!-- PRE-TRAINING TAB -->
+<div id="p2" style="display:none">
+  <div class="ib">Pre-training is next-token prediction on packed token sequences — no prompt/response split. Every token is an input AND a target (shifted by 1). The input/output split question only applies to SFT and inference.</div>
+  <div class="card" style="background:var(--color-background-secondary)">
+    <p class="st">Pre-training scenario</p>
+    <div class="sr">
+      <label>Context length</label>
+      <input type="range" min="2048" max="262144" step="2048" value="262144" id="pt-sl" oninput="updatePT()">
+      <span id="pt-sl-val">262,144</span>
+    </div>
+    <div class="sr">
+      <label>Micro-batch per GPU</label>
+      <input type="range" min="1" max="8" step="1" value="1" id="pt-bs" oninput="updatePT()">
+      <span id="pt-bs-val">1</span>
+    </div>
+    <div class="sr">
+      <label>Grad accum steps</label>
+      <input type="range" min="1" max="64" step="1" value="8" id="pt-ga" oninput="updatePT()">
+      <span id="pt-ga-val">8</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Total memory footprint (before sharding)</p>
+    <p class="card-sub">This is the TOTAL — ZeRO-3 divides most of it across GPUs</p>
+    <div class="lr">
+      <span><span class="ld" style="background:#534AB7"></span>Weights (bf16)</span>
+      <span><span class="ld" style="background:#1D9E75"></span>Gradients (bf16)</span>
+      <span><span class="ld" style="background:#BA7517"></span>AdamW fp32 states</span>
+      <span><span class="ld" style="background:#D4537E"></span>Activations (checkpointed)</span>
+    </div>
+    <div class="tbar">
+      <div class="tseg" style="background:#534AB7" id="pt-fw"></div>
+      <div class="tseg" style="background:#1D9E75" id="pt-fg"></div>
+      <div class="tseg" style="background:#BA7517" id="pt-fo"></div>
+      <div class="tseg" style="background:#D4537E" id="pt-fa"></div>
+    </div>
+    <div class="bar-row"><span class="bar-label">Weights (bf16, fixed)</span><div class="bar-track"><div class="bar-fill" style="background:#534AB7;width:100%" id="pt-bw"></div></div><span class="bar-val">8 GB</span></div>
+    <div class="bar-row"><span class="bar-label">Gradients (bf16, fixed)</span><div class="bar-track"><div class="bar-fill" style="background:#1D9E75" id="pt-bg"></div></div><span class="bar-val">8 GB</span></div>
+    <div class="bar-row"><span class="bar-label">AdamW (fp32 × 2, fixed)</span><div class="bar-track"><div class="bar-fill" style="background:#BA7517" id="pt-bo"></div></div><span class="bar-val">32 GB</span></div>
+    <div class="bar-row"><span class="bar-label">Activations (seq-dependent)</span><div class="bar-track"><div class="bar-fill" style="background:#D4537E" id="pt-ba"></div></div><span class="bar-val" id="pt-act-val">—</span></div>
+
+    <div class="divider"></div>
+    <p class="st">Memory accounting with ZeRO-3</p>
+    <div id="zero-breakdown"></div>
+
+    <div class="mg2" style="margin-top:10px">
+      <div class="met"><p class="ml">Total memory footprint</p><p class="mv-big" id="pt-total">—</p></div>
+      <div class="met"><p class="ml">A100 80G count needed</p><p class="mv-big" id="pt-gpu-count">—</p></div>
+    </div>
+    <div class="mg2">
+      <div class="met"><p class="ml">Per-GPU VRAM (ZeRO-3 + seq‖)</p><p class="mv" id="pt-per-gpu">—</p></div>
+      <div class="met"><p class="ml">Effective batch (all GPUs)</p><p class="mv" id="pt-eff-batch">—</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Pre-training vs SFT: what you're actually training on</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div>
+        <p class="st" style="color:var(--color-text-info)">Pre-training (next-token prediction)</p>
+        <div class="fr">Input:  [The cat sat on the mat]</div>
+        <div class="fr">Target: [cat sat on the mat .]</div>
+        <div class="fr">Loss: every token position</div>
+        <div class="fr">No concept of "prompt" or "response"</div>
+        <div class="fr">Documents packed end-to-end</div>
+      </div>
+      <div>
+        <p class="st" style="color:var(--color-text-warning)">SFT (instruction fine-tuning)</p>
+        <div class="fr">Input:  [INST] prompt [/INST]</div>
+        <div class="fr">Target: desired_response</div>
+        <div class="fr">Loss: response tokens only (masked)</div>
+        <div class="fr">Prompt tokens consume memory</div>
+        <div class="fr">but don't produce gradients</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+function setTab(i){
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
+  [0,1,2].forEach(j=>document.getElementById('p'+j).style.display=j===i?'':'none');
+}
+
+function fmt(gb){
+  if(gb<0.001)return'<1 MB';
+  if(gb<1)return(gb*1024).toFixed(0)+' MB';
+  if(gb>=1000)return(gb/1000).toFixed(1)+' TB';
+  return gb.toFixed(1)+' GB';
+}
+function pct(v,max){return Math.min(100,v/max*100).toFixed(1)+'%'}
+
+// Qwen3.5-4B correct specs
+const HIDDEN=2560, LAYERS=32, ATTN_LAYERS=8, DELTA_LAYERS=24;
+const Q_HEADS=16, KV_HEADS=4, ATTN_HEAD_DIM=256;
+const QK_HEADS=16, V_HEADS=32, DELTA_HEAD_DIM=128;
+const FFN_INT=9216;
+
+function naiveAttnGB(bs,sl){
+  // Only 8 attention layers, 16 Q heads, seq×seq score matrix
+  return (bs*Q_HEADS*sl*sl*2*ATTN_LAYERS)/1e9;
+}
+function deltaStateGB(bs){
+  // 24 DeltaNet layers, constant in seq
+  return (bs*QK_HEADS*DELTA_HEAD_DIM*DELTA_HEAD_DIM*2*DELTA_LAYERS)/1e9;
+}
+function flashActGB(bs,sl){
+  // O(seq): all layer activations, grad checkpointing = ~0.4x
+  return (bs*sl*HIDDEN*LAYERS*2)/1e9*0.4;
+}
+
+function gpuChips(gb){
+  const opts=[];
+  if(gb<=8)  opts.push({t:'RTX 3070',c:'ok'});
+  if(gb<=10) opts.push({t:'RTX 3080 10G',c:'ok'});
+  if(gb<=12) opts.push({t:'RTX 3080 12G',c:'ok'});
+  if(gb<=16) opts.push({t:'RTX 4080',c:'ok'});
+  if(gb<=24) opts.push({t:'RTX 4090',c:'ok'});
+  if(gb<=40) opts.push({t:'A100 40G',c:'ok'});
+  if(gb<=48) opts.push({t:'RTX 6000 Ada',c:'ok'});
+  if(gb<=80) opts.push({t:'A100 80G',c:'ok'});
+  if(gb>80)  opts.push({t:'Multi-GPU required',c:'warn'});
+  return opts.slice(0,4).map(o=>`<span class="gc ${o.c}">${o.t}</span>`).join('');
+}
+
+// ARCH TAB
+function updateArch(){
+  const sl=+document.getElementById('arch-sl').value;
+  const bs=+document.getElementById('arch-bs').value;
+  document.getElementById('arch-sl-val').textContent=sl.toLocaleString();
+  document.getElementById('arch-bs-val').textContent=bs;
+
+  const naive=naiveAttnGB(bs,sl);
+  const delta=deltaStateGB(bs);
+  const flash=flashActGB(bs,sl);
+  const saving=naive-flash;
+
+  document.getElementById('arch-naive').textContent=fmt(naive);
+  document.getElementById('arch-delta').textContent=fmt(delta);
+  document.getElementById('arch-save').textContent=naive>flash?fmt(saving)+' saved':'Flash < Naive';
+
+  const warn=document.getElementById('arch-warn');
+  if(sl>65536){
+    warn.innerHTML=`<div class="wb">At ${sl.toLocaleString()} tokens, naive attention on just the 8 Gated Attention layers = ${fmt(naive)}. Flash Attention is not optional here.</div>`;
+  } else if(sl>8192){
+    warn.innerHTML=`<div class="ib">Flash Attention recommended at this sequence length. Naive attention = ${fmt(naive)} vs Flash = ${fmt(flash)}.</div>`;
+  } else {
+    warn.innerHTML=`<div class="sb">Standard attention feasible at ${sl.toLocaleString()} tokens (${fmt(naive)}). Flash Attention still recommended for efficiency.</div>`;
+  }
+
+  // Render layer grid
+  const layers=[];
+  for(let block=0;block<8;block++){
+    for(let d=0;d<3;d++) layers.push({type:'delta',n:block*4+d+1});
+    layers.push({type:'attn',n:block*4+4});
+  }
+  document.getElementById('arch-layers').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:8px">
+      ${layers.map(l=>`
+        <div style="text-align:center;padding:4px 2px;border-radius:4px;font-size:10px;
+          background:${l.type==='attn'?'var(--color-background-warning)':'var(--color-background-info)'};
+          color:${l.type==='attn'?'var(--color-text-warning)':'var(--color-text-info)'}">
+          L${l.n}<br><span style="font-size:9px">${l.type==='attn'?'Attn':'Δ'}</span>
+        </div>`).join('')}
+    </div>
+    <div style="display:flex;gap:12px;font-size:11px;color:var(--color-text-secondary)">
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--color-background-warning);margin-right:4px;vertical-align:middle"></span>Gated Attention (8) — O(seq²)</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--color-background-info);margin-right:4px;vertical-align:middle"></span>Gated DeltaNet (24) — O(1) in seq</span>
+    </div>`;
+}
+
+// FINE-TUNING TAB
+let method='qlora';
+function setMethod(m){
+  method=m;
+  ['qlora','lora','full'].forEach(x=>document.getElementById('btn-'+x).classList.toggle('active',x===m));
+  updateFT();
+}
+
+function updateFT(){
+  const sl=+document.getElementById('ft-sl').value;
+  const bs=+document.getElementById('ft-bs').value;
+  const rank=+document.getElementById('ft-rank').value;
+  document.getElementById('ft-sl-val').textContent=sl.toLocaleString();
+  document.getElementById('ft-bs-val').textContent=bs;
+  document.getElementById('ft-rank-val').textContent=rank;
+
+  const loraLayers=96;
+  const loraParams=loraLayers*2*rank*HIDDEN;
+  const loraParamsGB=loraParams*2/1e9;
+  const loraOptGB=loraParams*8/1e9;
+
+  const naive=naiveAttnGB(bs,sl);
+  const flash=flashActGB(bs,sl);
+  const needsFlash=sl>8192||naive>40;
+  const actGB=needsFlash?flash:flash*2;
+
+  document.getElementById('ft-naive').textContent=fmt(naive);
+  document.getElementById('ft-flash').textContent=fmt(flash);
+  document.getElementById('ft-attn-f1').textContent=
+    `Naive: ${bs}×${Q_HEADS}×${sl.toLocaleString()}²×2×${ATTN_LAYERS} = ${fmt(naive)}`;
+  document.getElementById('ft-attn-f2').textContent=
+    `DeltaNet: ${bs}×${QK_HEADS}×128²×2×${DELTA_LAYERS} = ${fmt(deltaStateGB(bs))} (constant)`;
+
+  let total,segs,title,sub;
+  if(method==='qlora'){
+    const base=2.5;
+    total=base+loraParamsGB+loraOptGB+actGB;
+    title='QLoRA (4-bit NF4 + bf16 adapters)';
+    sub='Base quantized to NF4, LoRA adapters in bf16';
+    segs=[
+      {c:'#378ADD',w:pct(base,total),label:'Base model (4-bit NF4)',v:fmt(base)},
+      {c:'#1D9E75',w:pct(loraParamsGB,total),label:`LoRA adapters (rank ${rank})`,v:fmt(loraParamsGB)},
+      {c:'#BA7517',w:pct(loraOptGB,total),label:'AdamW LoRA states',v:fmt(loraOptGB)},
+      {c:'#D4537E',w:pct(actGB,total),label:'Activations',v:fmt(actGB)},
+    ];
+  } else if(method==='lora'){
+    const base=8;
+    total=base+loraParamsGB+loraOptGB+actGB;
+    title='LoRA (bf16 base, frozen)';
+    sub='Full precision base model, only adapters trained';
+    segs=[
+      {c:'#534AB7',w:pct(base,total),label:'Base model (bf16)',v:fmt(base)},
+      {c:'#1D9E75',w:pct(loraParamsGB,total),label:`LoRA adapters (rank ${rank})`,v:fmt(loraParamsGB)},
+      {c:'#BA7517',w:pct(loraOptGB,total),label:'AdamW LoRA states',v:fmt(loraOptGB)},
+      {c:'#D4537E',w:pct(actGB,total),label:'Activations',v:fmt(actGB)},
+    ];
+  } else {
+    const w=8,g=8,o=32;
+    total=w+g+o+actGB;
+    title='Full fine-tuning (bf16)';
+    sub='All 4B parameters updated with AdamW';
+    segs=[
+      {c:'#534AB7',w:pct(w,total),label:'Weights (bf16)',v:fmt(w)},
+      {c:'#1D9E75',w:pct(g,total),label:'Gradients (bf16)',v:fmt(g)},
+      {c:'#BA7517',w:pct(o,total),label:'AdamW states (fp32×2)',v:fmt(o)},
+      {c:'#D4537E',w:pct(actGB,total),label:'Activations',v:fmt(actGB)},
+    ];
+  }
+
+  document.getElementById('ft-title').textContent=title;
+  document.getElementById('ft-sub').textContent=sub;
+  document.getElementById('ft-tbar').innerHTML=segs.map(s=>`<div class="tseg" style="background:${s.c};width:${s.w}"></div>`).join('');
+  document.getElementById('ft-bars').innerHTML=segs.map(s=>`<div class="bar-row"><span class="bar-label">${s.label}</span><div class="bar-track"><div class="bar-fill" style="background:${s.c};width:${s.w}"></div></div><span class="bar-val">${s.v}</span></div>`).join('');
+  document.getElementById('ft-legend').innerHTML=segs.map(s=>`<span><span class="ld" style="background:${s.c}"></span>${s.label}</span>`).join('');
+  document.getElementById('ft-total').textContent=fmt(total);
+  document.getElementById('ft-gpus').innerHTML='<p class="st">Compatible GPUs (total VRAM ≥ '+fmt(total)+')</p>'+gpuChips(total);
+
+  const alert=document.getElementById('ft-alert');
+  if(sl>131072){
+    alert.innerHTML=`<div class="wb">At ${sl.toLocaleString()} tokens: naive attn = ${fmt(naive)} on 8 layers alone. Flash Attention + gradient checkpointing required. Consider sequence parallelism.</div>`;
+  } else if(needsFlash){
+    alert.innerHTML=`<div class="ib">Flash Attention recommended at ${sl.toLocaleString()} tokens. Naive attn would need ${fmt(naive)} just for attention scores.</div>`;
+  } else {
+    alert.innerHTML='';
+  }
+}
+
+// PRE-TRAINING TAB
+function updatePT(){
+  const sl=+document.getElementById('pt-sl').value;
+  const bs=+document.getElementById('pt-bs').value;
+  const ga=+document.getElementById('pt-ga').value;
+  document.getElementById('pt-sl-val').textContent=sl.toLocaleString();
+  document.getElementById('pt-bs-val').textContent=bs;
+  document.getElementById('pt-ga-val').textContent=ga;
+
+  const w=8,g=8,o=32;
+  // Gradient checkpointing: store ~1 activation per 2 layers
+  const actGB=(bs*sl*HIDDEN*(LAYERS/2)*2)/1e9;
+  const total=w+g+o+actGB;
+
+  // Minimum A100-80G count: ceil(total/80), but also need seq parallelism for long seqs
+  const gpuForMem=Math.ceil(total/80);
+  const gpuForSeq=sl>65536?Math.ceil(sl/65536):1;
+  const gpuCount=Math.max(gpuForMem,gpuForSeq);
+
+  // With ZeRO-3: model state sharded; activations need seq parallelism
+  const perGpuModelState=(w+g+o)/gpuCount;
+  const perGpuAct=actGB/gpuCount;
+  const perGpuTotal=perGpuModelState+perGpuAct;
+
+  const maxBar=Math.max(total,80);
+  document.getElementById('pt-bw').style.width=pct(w,maxBar);
+  document.getElementById('pt-bg').style.width=pct(g,maxBar);
+  document.getElementById('pt-bo').style.width=pct(o,maxBar);
+  document.getElementById('pt-ba').style.width=pct(actGB,maxBar);
+  document.getElementById('pt-fw').style.width=pct(w,total);
+  document.getElementById('pt-fg').style.width=pct(g,total);
+  document.getElementById('pt-fo').style.width=pct(o,total);
+  document.getElementById('pt-fa').style.width=pct(actGB,total);
+  document.getElementById('pt-act-val').textContent=fmt(actGB);
+  document.getElementById('pt-total').textContent=fmt(total);
+  document.getElementById('pt-gpu-count').textContent=gpuCount+'× A100 80G';
+  document.getElementById('pt-per-gpu').textContent=fmt(perGpuTotal);
+  document.getElementById('pt-eff-batch').textContent=(bs*ga*gpuCount).toLocaleString()+' seqs';
+
+  document.getElementById('zero-breakdown').innerHTML=`
+    <div class="zero-row"><span class="zero-label">Weights (ZeRO-3)</span><span class="zero-val">${fmt(w/gpuCount)}/GPU</span><span class="zero-note">  (${fmt(w)} total ÷ ${gpuCount})</span></div>
+    <div class="zero-row"><span class="zero-label">Gradients (ZeRO-3)</span><span class="zero-val">${fmt(g/gpuCount)}/GPU</span><span class="zero-note">  (${fmt(g)} total ÷ ${gpuCount})</span></div>
+    <div class="zero-row"><span class="zero-label">AdamW (ZeRO-3)</span><span class="zero-val">${fmt(o/gpuCount)}/GPU</span><span class="zero-note">  (${fmt(o)} total ÷ ${gpuCount})</span></div>
+    <div class="zero-row"><span class="zero-label">Activations (seq‖)</span><span class="zero-val">${fmt(perGpuAct)}/GPU</span><span class="zero-note">  (${fmt(actGB)} total ÷ ${gpuCount})</span></div>`;
+}
+
+updateArch();updateFT();updatePT();
+</script>

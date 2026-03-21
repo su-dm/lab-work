@@ -1,4 +1,8 @@
 .env
+.venv
+.venv-infer
+.model_cache/
+data_samples/*
 train_results/*/checkpoints/
 train_results/*/wandb_run_id.txt
 prompt_results/*/generated/

@@ -63,14 +63,16 @@ def format_training_example(
     """
     prompt_messages = build_messages(system_prompt, user_text)
     prompt_text = tokenizer.apply_chat_template(
-        prompt_messages, tokenize=False, add_generation_prompt=True
+        prompt_messages, tokenize=False, add_generation_prompt=True,
+        enable_thinking=False,
     )
 
     full_messages = prompt_messages + [
         {"role": "assistant", "content": assistant_text}
     ]
     full_text = tokenizer.apply_chat_template(
-        full_messages, tokenize=False, add_generation_prompt=False
+        full_messages, tokenize=False, add_generation_prompt=False,
+        enable_thinking=False,
     )
 
     prompt_ids = tokenizer(prompt_text, add_special_tokens=False)["input_ids"]

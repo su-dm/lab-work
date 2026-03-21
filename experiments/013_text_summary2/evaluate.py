@@ -21,7 +21,7 @@ from datasets import load_dataset
 from peft import PeftModel
 from rouge_score import rouge_scorer
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoTokenizer, Qwen3_5ForCausalLM
 
 PROJECT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_DIR))
@@ -93,6 +93,8 @@ Config reference:
     parser.add_argument("--expected_sections", nargs="+",
                         default=["Procedural History", "Key Facts", "Legal Issues", "Holding"],
                         help="Section headings to check for in format compliance")
+    parser.add_argument("--base_model", type=str, default=None,
+                        help="Base model ID for LoRA checkpoints (default: Qwen/Qwen3.5-4B)")
     return parser.parse_args()
 
 
@@ -119,6 +121,7 @@ def load_eval_config(args) -> dict:
                        else cfg.get("generation", {}).get("temperature", 0.6),
         "expected_sections": args.expected_sections or cfg.get("expected_sections",
                              ["Procedural History", "Key Facts", "Legal Issues", "Holding"]),
+        "base_model": args.base_model or cfg.get("base_model", DEFAULT_BASE_MODEL),
         "llm_judge": args.llm_judge,
         "no_wandb": args.no_wandb,
         "wandb_project": args.wandb_project,
@@ -129,20 +132,21 @@ def load_eval_config(args) -> dict:
 # Model loading
 # ---------------------------------------------------------------------------
 
-BASE_MODEL_ID = "Qwen/Qwen3-4B-Instruct-2507"
+DEFAULT_BASE_MODEL = "Qwen/Qwen3.5-4B"
 
 
-def load_model_and_tokenizer(checkpoint_path: str):
-    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_ID)
+def load_model_and_tokenizer(checkpoint_path: str, base_model_id: str | None = None):
+    base_model_id = base_model_id or DEFAULT_BASE_MODEL
+    tokenizer = AutoTokenizer.from_pretrained(base_model_id)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
     is_lora_checkpoint = (Path(checkpoint_path) / "adapter_config.json").exists()
 
     if is_lora_checkpoint:
-        print(f"Loading base model: {BASE_MODEL_ID}")
-        base_model = AutoModelForCausalLM.from_pretrained(
-            BASE_MODEL_ID,
+        print(f"Loading base model: {base_model_id}")
+        base_model = Qwen3_5ForCausalLM.from_pretrained(
+            base_model_id,
             torch_dtype=torch.bfloat16,
             device_map="auto",
             attn_implementation="flash_attention_2",
@@ -151,7 +155,7 @@ def load_model_and_tokenizer(checkpoint_path: str):
         model = PeftModel.from_pretrained(base_model, checkpoint_path)
     else:
         print(f"Loading model directly: {checkpoint_path}")
-        model = AutoModelForCausalLM.from_pretrained(
+        model = Qwen3_5ForCausalLM.from_pretrained(
             checkpoint_path,
             torch_dtype=torch.bfloat16,
             device_map="auto",
@@ -169,7 +173,8 @@ def load_model_and_tokenizer(checkpoint_path: str):
 def generate_summary(model, tokenizer, system_prompt: str, input_text: str,
                      max_new_tokens: int, temperature: float) -> str:
     messages = build_messages(system_prompt, input_text)
-    prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True,
+                                           enable_thinking=False)
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 
     with torch.no_grad():
@@ -501,7 +506,7 @@ def main():
         wandb.init(project=eval_cfg["wandb_project"], name=run_name, config=eval_cfg)
         wandb_url = wandb.run.get_url() or ""
 
-    model, tokenizer = load_model_and_tokenizer(eval_cfg["checkpoint"])
+    model, tokenizer = load_model_and_tokenizer(eval_cfg["checkpoint"], eval_cfg.get("base_model"))
 
     print("Loading dataset...")
     ds = load_dataset(eval_cfg["dataset_name"], eval_cfg["dataset_config"])

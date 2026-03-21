@@ -24,9 +24,9 @@ import torch
 import wandb
 from peft import LoraConfig, TaskType, get_peft_model
 from transformers import (
-    AutoModelForCausalLM,
     AutoTokenizer,
     DataCollatorForLanguageModeling,
+    Qwen3_5ForCausalLM,
     Trainer,
     TrainingArguments,
 )
@@ -184,7 +184,7 @@ def main():
 
     if is_main_process:
         print(f"Loading model: {config['base_model']}")
-    model = AutoModelForCausalLM.from_pretrained(
+    model = Qwen3_5ForCausalLM.from_pretrained(
         config["base_model"],
         torch_dtype=dtype,
         attn_implementation="flash_attention_2",
