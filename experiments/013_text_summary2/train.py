@@ -10,10 +10,15 @@ Usage:
 
     # Convenience launcher (auto-detects GPUs)
     bash launch_train.sh configs/default.yaml
+
+    # Resume an interrupted run (picks up from latest checkpoint)
+    accelerate launch --num_processes=4 --mixed_precision=bf16 \
+        train.py --resume_from train_results/002
 """
 
 import argparse
 import os
+import signal
 import shutil
 import sys
 import time
@@ -28,6 +33,7 @@ from transformers import (
     DataCollatorForLanguageModeling,
     Qwen3_5ForCausalLM,
     Trainer,
+    TrainerCallback,
     TrainingArguments,
 )
 
@@ -36,6 +42,67 @@ sys.path.insert(0, str(PROJECT_DIR))
 
 from data import load_and_prepare
 from prompts import get_next_run_dir, load_config, load_env
+
+
+class GracefulShutdownCallback(TrainerCallback):
+    """Intercepts SIGINT/SIGTERM so training stops cleanly after the current step.
+
+    First signal: finishes the current step, saves a checkpoint, then exits
+    the training loop normally so the finally block can write a summary.
+    Second signal: force-exits immediately.
+    """
+
+    def __init__(self):
+        self._interrupted = False
+        self._original_sigint = None
+        self._original_sigterm = None
+
+    @property
+    def was_interrupted(self):
+        return self._interrupted
+
+    def on_train_begin(self, args, state, control, **kwargs):
+        self._original_sigint = signal.getsignal(signal.SIGINT)
+        self._original_sigterm = signal.getsignal(signal.SIGTERM)
+        signal.signal(signal.SIGINT, self._handle_signal)
+        signal.signal(signal.SIGTERM, self._handle_signal)
+
+    def _handle_signal(self, signum, frame):
+        if self._interrupted:
+            print("\nForce stopping — no checkpoint will be saved for this step.")
+            sys.exit(1)
+        self._interrupted = True
+        sig_name = signal.Signals(signum).name
+        print(f"\n{'=' * 60}")
+        print(f"  {sig_name} received — graceful shutdown requested.")
+        print("  Finishing current step, saving checkpoint, then exiting.")
+        print("  Press Ctrl+C again to force-stop immediately.")
+        print(f"{'=' * 60}")
+
+    def on_step_end(self, args, state, control, **kwargs):
+        if self._interrupted:
+            control.should_save = True
+            control.should_training_stop = True
+            control.should_evaluate = False
+        return control
+
+    def on_train_end(self, args, state, control, **kwargs):
+        if self._original_sigint is not None:
+            signal.signal(signal.SIGINT, self._original_sigint)
+        if self._original_sigterm is not None:
+            signal.signal(signal.SIGTERM, self._original_sigterm)
+
+
+def _find_latest_checkpoint(run_dir: Path) -> Path | None:
+    """Return the most recent checkpoint-NNN directory inside run_dir/checkpoints."""
+    cp_root = run_dir / "checkpoints"
+    if not cp_root.exists():
+        return None
+    candidates = sorted(
+        [d for d in cp_root.iterdir() if d.is_dir() and d.name.startswith("checkpoint-")],
+        key=lambda d: int(d.name.split("-")[-1]),
+    )
+    return candidates[-1] if candidates else None
 
 
 def parse_args():
@@ -54,6 +121,14 @@ Examples:
   accelerate launch --num_processes=4 --mixed_precision=bf16 \\
       train.py --config configs/my_run.yaml
 
+  # Resume an interrupted run (uses saved config + latest checkpoint)
+  accelerate launch --num_processes=4 --mixed_precision=bf16 \\
+      train.py --resume_from train_results/002
+
+  # Resume from a specific checkpoint
+  accelerate launch --num_processes=4 --mixed_precision=bf16 \\
+      train.py --resume_from train_results/002/checkpoints/checkpoint-400
+
 Config reference:
   See configs/example_train_config.yaml for all available options
   with detailed comments explaining each parameter.
@@ -66,22 +141,37 @@ Outputs:
 """,
     )
     parser.add_argument(
-        "--config", type=str, required=True,
-        help="Path to YAML training config file (see configs/example_train_config.yaml)",
+        "--config", type=str, default=None,
+        help="Path to YAML training config file (optional when using --resume_from)",
+    )
+    parser.add_argument(
+        "--resume_from", type=str, default=None,
+        help="Resume training from a previous run directory (e.g. train_results/002) "
+             "or a specific checkpoint path. Reuses the same run directory.",
     )
     parser.add_argument(
         "--local_rank", type=int, default=-1,
         help="(Internal) Set automatically by DeepSpeed/accelerate. Do not set manually.",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.config is None and args.resume_from is None:
+        parser.error("--config is required when not using --resume_from")
+    return args
 
 
-def write_summary(run_dir: Path, config: dict, trainer, train_result, start_time: float, wandb_url: str):
+def write_summary(
+    run_dir: Path,
+    config: dict,
+    trainer,
+    start_time: float,
+    wandb_url: str,
+    interrupted: bool = False,
+):
     elapsed = time.time() - start_time
     hours, remainder = divmod(int(elapsed), 3600)
     minutes, seconds = divmod(remainder, 60)
 
-    log_history = trainer.state.log_history
+    log_history = trainer.state.log_history if trainer else []
     train_losses = [e["loss"] for e in log_history if "loss" in e]
     eval_losses = [e["eval_loss"] for e in log_history if "eval_loss" in e]
 
@@ -97,11 +187,20 @@ def write_summary(run_dir: Path, config: dict, trainer, train_result, start_time
                 best_eval_step = entry.get("step")
                 break
 
+    global_step = trainer.state.global_step if trainer else 0
+    max_steps = trainer.state.max_steps if trainer else 0
+
+    if interrupted:
+        status = f"INTERRUPTED at step {global_step}/{max_steps} (graceful shutdown)"
+    else:
+        status = "COMPLETED"
+
     hub_cfg = config.get("hub", {})
     hub_status = f"pushed to {hub_cfg['repo']}" if hub_cfg.get("push_checkpoints") else "disabled"
 
     lines = [
         "=== Training Summary ===",
+        f"Status: {status}",
         f"Date: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}",
         f"Run ID: train-{run_dir.name}",
         f"WandB Run: {wandb_url}",
@@ -112,7 +211,7 @@ def write_summary(run_dir: Path, config: dict, trainer, train_result, start_time
         f"Max seq length: {config['max_seq_length']}",
         "",
         f"Duration: {hours}h {minutes}m {seconds}s",
-        f"Total steps: {trainer.state.global_step}",
+        f"Steps completed: {global_step}" + (f"/{max_steps}" if max_steps > 0 else ""),
         f"Final train loss: {train_losses[-1]:.4f}" if train_losses else "Final train loss: N/A",
         f"Final eval loss: {eval_losses[-1]:.4f}" if eval_losses else "Final eval loss: N/A",
     ]
@@ -124,6 +223,11 @@ def write_summary(run_dir: Path, config: dict, trainer, train_result, start_time
     lines.append("Checkpoints saved:")
     for cp in checkpoints:
         lines.append(f"  - checkpoints/{cp}")
+
+    if interrupted and checkpoints:
+        lines.append("")
+        lines.append("To resume training:")
+        lines.append(f"  accelerate launch ... train.py --resume_from {run_dir}")
 
     lines.append("")
     lines.append(f"HF Hub: {hub_status}")
@@ -143,19 +247,61 @@ def write_summary(run_dir: Path, config: dict, trainer, train_result, start_time
     print(f"\nSummary written to {summary_path}")
 
 
+def _resolve_resume(resume_from: str) -> tuple[Path, Path, str | None]:
+    """Resolve --resume_from into (run_dir, checkpoint_path, config_path).
+
+    Accepts either a run directory (e.g. train_results/002) or a specific
+    checkpoint directory (e.g. train_results/002/checkpoints/checkpoint-400).
+    """
+    path = Path(resume_from)
+    if not path.exists():
+        print(f"Error: resume path not found: {path}")
+        sys.exit(1)
+
+    if path.name.startswith("checkpoint-"):
+        checkpoint_path = path
+        run_dir = path.parent.parent  # checkpoints/checkpoint-N -> run_dir
+    else:
+        run_dir = path
+        checkpoint_path = _find_latest_checkpoint(run_dir)
+        if checkpoint_path is None:
+            print(f"Error: no checkpoints found in {run_dir / 'checkpoints'}")
+            sys.exit(1)
+
+    saved_config = run_dir / "config.yaml"
+    config_path = str(saved_config) if saved_config.exists() else None
+
+    return run_dir, checkpoint_path, config_path
+
+
 def main():
     args = parse_args()
     load_env(PROJECT_DIR)
-    config = load_config(args.config)
 
-    run_dir = get_next_run_dir(PROJECT_DIR / "train_results")
-    run_name = f"train-{run_dir.name}"
-    checkpoint_dir = run_dir / "checkpoints"
-    checkpoint_dir.mkdir(exist_ok=True)
-
-    shutil.copy2(args.config, run_dir / "config.yaml")
+    resume_checkpoint = None
+    if args.resume_from:
+        run_dir, resume_checkpoint, saved_config_path = _resolve_resume(args.resume_from)
+        config_path = args.config or saved_config_path
+        if config_path is None:
+            print("Error: no config found. Pass --config or ensure config.yaml "
+                  "exists in the run directory.")
+            sys.exit(1)
+        config = load_config(config_path)
+        run_name = f"train-{run_dir.name}-resumed"
+        checkpoint_dir = run_dir / "checkpoints"
+    else:
+        config = load_config(args.config)
+        run_dir = get_next_run_dir(PROJECT_DIR / "train_results")
+        run_name = f"train-{run_dir.name}"
+        checkpoint_dir = run_dir / "checkpoints"
+        checkpoint_dir.mkdir(exist_ok=True)
+        shutil.copy2(args.config, run_dir / "config.yaml")
 
     is_main_process = int(os.environ.get("LOCAL_RANK", 0)) == 0
+
+    if is_main_process and resume_checkpoint:
+        print(f"Resuming from checkpoint: {resume_checkpoint}")
+        print(f"Run directory: {run_dir}")
 
     wandb_cfg = config.get("wandb", {})
     wandb_url = ""
@@ -236,12 +382,15 @@ def main():
         eval_steps=t_cfg["eval_steps"],
         save_strategy="steps",
         save_steps=t_cfg["save_steps"],
+        save_total_limit=5,
         report_to="wandb" if is_main_process else "none",
         run_name=run_name,
         ddp_find_unused_parameters=False,
         dataloader_num_workers=4,
         deepspeed=ds_config_path,
     )
+
+    shutdown_cb = GracefulShutdownCallback()
 
     trainer = Trainer(
         model=model,
@@ -250,29 +399,43 @@ def main():
         train_dataset=train_ds,
         eval_dataset=eval_ds,
         data_collator=data_collator,
+        callbacks=[shutdown_cb],
     )
 
     if is_main_process:
-        print("Starting training...")
+        if resume_checkpoint:
+            print(f"Resuming training from step {resume_checkpoint.name}...")
+        else:
+            print("Starting training...")
     start_time = time.time()
-    train_result = trainer.train()
 
-    if is_main_process:
-        print("Saving final model...")
-        trainer.save_model(str(checkpoint_dir / "final"))
-
-        hub_cfg = config.get("hub", {})
-        if hub_cfg.get("push_checkpoints"):
-            repo_id = hub_cfg["repo"]
-            print(f"Pushing to HF Hub: {repo_id}")
+    try:
+        trainer.train(resume_from_checkpoint=str(resume_checkpoint) if resume_checkpoint else None)
+    except KeyboardInterrupt:
+        if is_main_process:
+            print("\nKeyboardInterrupt caught — running cleanup...")
+    finally:
+        interrupted = shutdown_cb.was_interrupted
+        if is_main_process:
             try:
-                model.push_to_hub(repo_id, commit_message=f"{run_name} final")
-                tokenizer.push_to_hub(repo_id, commit_message=f"{run_name} tokenizer")
+                print("Saving final model...")
+                trainer.save_model(str(checkpoint_dir / "final"))
             except Exception as e:
-                print(f"Warning: HF Hub push failed: {e}")
+                print(f"Warning: final model save failed: {e}")
 
-        write_summary(run_dir, config, trainer, train_result, start_time, wandb_url)
-        wandb.finish()
+            hub_cfg = config.get("hub", {})
+            if hub_cfg.get("push_checkpoints"):
+                repo_id = hub_cfg["repo"]
+                print(f"Pushing to HF Hub: {repo_id}")
+                try:
+                    model.push_to_hub(repo_id, commit_message=f"{run_name} final")
+                    tokenizer.push_to_hub(repo_id, commit_message=f"{run_name} tokenizer")
+                except Exception as e:
+                    print(f"Warning: HF Hub push failed: {e}")
+
+            write_summary(run_dir, config, trainer, start_time, wandb_url,
+                          interrupted=interrupted)
+            wandb.finish(exit_code=1 if interrupted else 0)
 
     print(f"Done. Results in {run_dir}")
 
