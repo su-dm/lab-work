@@ -12,7 +12,7 @@
 # HuggingFace model ID for the base model to fine-tune
 base_model: "Qwen/Qwen3.5-4B"
 
-# Maximum sequence length in tokens. Half of Qwen3.5-4B's native 262144.
+# Maximum sequence length in tokens. Half of Qwen4.5-4B's native 262144.
 # Samples with input > 90% of this are filtered out, reserving 10% for generation.
 max_seq_length: 131072
 
