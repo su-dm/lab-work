@@ -27,6 +27,7 @@ from pathlib import Path
 
 import torch
 import wandb
+from liger_kernel.transformers import apply_liger_kernel_to_qwen3_5
 from peft import LoraConfig, TaskType, get_peft_model
 from transformers import (
     AutoTokenizer,
@@ -327,6 +328,10 @@ def main():
     train_ds, eval_ds = load_and_prepare(config, tokenizer)
     if is_main_process:
         print(f"  Train samples: {len(train_ds)}, Eval samples: {len(eval_ds)}")
+
+    # Monkey-patch Qwen3.5 with Liger Kernel's fused linear cross-entropy,
+    # Triton RMSNorm, and SwiGLU — must be called before model instantiation.
+    apply_liger_kernel_to_qwen3_5()
 
     if is_main_process:
         print(f"Loading model: {config['base_model']}")
