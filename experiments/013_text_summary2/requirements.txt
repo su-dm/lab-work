@@ -1,3 +1,7 @@
+# Plain pip install: pip install -r requirements.txt
+# On CUDA 13.0 machines, uncomment the next line:
+# --extra-index-url https://download.pytorch.org/whl/cu130
+
 # Core training
 torch>=2.8.0
 transformers>=5.2.0,<5.3.0
@@ -6,15 +10,12 @@ peft>=0.18.0
 accelerate>=1.0.0
 deepspeed>=0.17.0
 
+# Liger Kernel (nightly for Qwen3.5 support, not yet in stable release)
+liger-kernel-nightly
+
 # Qwen3.5 DeltaNet attention kernels (REQUIRED for Gated DeltaNet layers)
 flash-linear-attention @ git+https://github.com/fla-org/flash-linear-attention
 causal-conv1d @ git+https://github.com/Dao-AILab/causal-conv1d
-
-# Flash Attention 2 (for the 8 full attention layers)
-flash-attn==2.8.3
-
-# Inference (install separately — vllm currently requires transformers<5)
-# vllm>=0.17.0
 
 # Logging & tracking
 wandb>=0.16.0
