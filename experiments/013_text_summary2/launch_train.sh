@@ -1,5 +1,5 @@
 #!/bin/bash
-# Launch multi-GPU training with DeepSpeed ZeRO-2.
+# Launch multi-GPU training (DDP or DeepSpeed ZeRO-2, set in config YAML).
 #
 # Usage:
 #   bash launch_train.sh configs/default.yaml            # new run

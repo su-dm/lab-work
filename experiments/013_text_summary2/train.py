@@ -1,4 +1,4 @@
-"""Config-driven multi-GPU training for legal summarization with DeepSpeed ZeRO-2.
+"""Config-driven multi-GPU training for legal summarization (DDP or DeepSpeed ZeRO-2).
 
 Usage:
     # See all options
@@ -361,7 +361,12 @@ def main():
     )
 
     t_cfg = config["training"]
-    ds_config_path = str(PROJECT_DIR / "ds_config_zero2.json")
+    use_deepspeed = t_cfg.get("use_deepspeed", True)
+    ds_config_path = str(PROJECT_DIR / "ds_config_zero2.json") if use_deepspeed else None
+
+    if is_main_process:
+        strategy = "DeepSpeed ZeRO-2" if use_deepspeed else "DDP"
+        print(f"Distribution strategy: {strategy}")
 
     training_args = TrainingArguments(
         output_dir=str(checkpoint_dir),

@@ -108,6 +108,12 @@ training:
   # Random seed for reproducibility.
   seed: 3407
 
+  # Use DeepSpeed ZeRO-2 for optimizer-state sharding across GPUs.
+  # true  -> uses ds_config_zero2.json (saves ~30% VRAM, best for multi-GPU)
+  # false -> plain DDP via accelerate (simpler, works fine for single-GPU or
+  #          when the model + optimizer fit in each GPU's memory)
+  use_deepspeed: true
+
 # --- Eval Format ---
 # Expected sections in generated summaries. Used by evaluate.py to
 # measure format compliance.
