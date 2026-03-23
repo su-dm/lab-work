@@ -1,0 +1,80 @@
+# =============================================================================
+# Smoke-Test Configuration
+# =============================================================================
+# Minimal run (~1-2 min on a single GPU) to validate the full pipeline
+# end-to-end before committing to an expensive training run.
+#
+# Validates: dataset download, tokenization, model load, LoRA init,
+# forward/backward pass, eval, checkpoint save, HF Hub push, WandB logging.
+#
+# Run:
+#   cd experiments/013_text_summary2
+#   python train.py --config train_results/001_LexSumm/smoke_test_config.yaml
+# =============================================================================
+
+# --- Model (same as real run) ---
+base_model: "Qwen/Qwen3.5-4B"
+
+# Short context to keep VRAM low and tokenization fast.
+max_seq_length: 12048
+
+# --- System Prompt (same as real run) ---
+system_prompt: |
+  You are a legal research assistant. Summarize the following legal case.
+
+# --- LoRA Configuration (same as real run) ---
+lora:
+  r: 64
+  alpha: 64
+  dropout: 0.0
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+
+# --- Dataset (same as real run) ---
+dataset:
+  name: "CJWeiss/LexSumm"
+  config: "multilong"
+  input_col: "input"
+  output_col: "output"
+
+# --- Training Hyperparameters (tuned for speed) ---
+training:
+  per_device_batch_size: 1
+  grad_accum_steps: 1
+  learning_rate: 1.0e-4
+  num_epochs: 1
+  warmup_steps: 1
+  save_steps: 2
+  eval_steps: 2
+  max_steps: 3
+  weight_decay: 0.01
+  lr_scheduler: "cosine"
+  logging_steps: 1
+  seed: 3407
+  use_deepspeed: true
+
+# --- Eval Format (same as real run) ---
+eval:
+  expected_sections:
+    - "Procedural History"
+    - "Key Facts"
+    - "Legal Issues"
+    - "Holding"
+
+# --- HuggingFace Hub ---
+# Set push_checkpoints to true and fill in your repo to validate HF_TOKEN
+# and repo access. Use a throwaway repo if you don't want to pollute the
+# real one (e.g. "YOUR_USERNAME/smoke-test-delete-me").
+hub:
+  repo: "su-dm/qwen3_5lora"
+  push_checkpoints: true
+
+# --- Weights & Biases (same as real run) ---
+wandb:
+  project: "legal-summary"

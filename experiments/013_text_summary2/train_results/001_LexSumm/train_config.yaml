@@ -112,7 +112,7 @@ training:
   # true  -> uses ds_config_zero2.json (saves ~30% VRAM, best for multi-GPU)
   # false -> plain DDP via accelerate (simpler, works fine for single-GPU or
   #          when the model + optimizer fit in each GPU's memory)
-  use_deepspeed: false
+  use_deepspeed: true
 
 # --- Eval Format ---
 # Expected sections in generated summaries. Used by evaluate.py to
