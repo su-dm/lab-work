@@ -1,0 +1,31 @@
+=== Training Summary ===
+Status: COMPLETED
+Date: 2026-03-23 21:11:20 UTC
+Run ID: train-013
+WandB Run: https://wandb.ai/sudm/legal-summary/runs/1dtc0vg5
+
+Model: Qwen/Qwen3.5-4B
+Dataset: CJWeiss/LexSumm (multilong)
+LoRA rank: 64, alpha: 64
+Max seq length: 131072
+
+Duration: 2h 47m 51s
+Steps completed: 86/86
+Final train loss: 1.1045
+Final eval loss: N/A
+
+Checkpoints saved:
+  - checkpoints/checkpoint-86
+  - checkpoints/final
+
+HF Hub: disabled
+
+--- Training Config ---
+Batch size (per device): 1
+Gradient accumulation: 8
+Learning rate: 0.0001
+LR scheduler: cosine
+Warmup steps: 100
+Weight decay: 0.01
+Seed: 3407
+~

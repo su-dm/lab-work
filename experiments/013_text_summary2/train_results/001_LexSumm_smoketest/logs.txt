@@ -1,0 +1,92 @@
+root@6cd8dc72bc0f:~/lab-work/experiments/013_text_summary2# bash launch_train.sh train_results/001_LexSumm/smoke_test_config.yaml
+============================================
+  Legal Summary Training
+  Config:   /root/lab-work/experiments/013_text_summary2/train_results/001_LexSumm/smoke_test_config.yaml
+  GPUs:     4
+============================================
+The following values were not passed to `accelerate launch` and had defaults used instead:
+        `--dynamo_backend` was set to a value of `'no'`
+To avoid this warning pass in values for each of the problematic parameters or run `accelerate config`.
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from WANDB_API_KEY.
+wandb: Currently logged in as: sudm711 (sudm) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.25.1
+wandb: Run data is saved locally in /root/lab-work/experiments/013_text_summary2/wandb/run-20260323_175538-1j577ey0
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run train-007
+wandb: ⭐️ View project at https://wandb.ai/sudm/legal-summary
+wandb: 🚀 View run at https://wandb.ai/sudm/legal-summary/runs/1j577ey0
+wandb: WARNING The get_url method is deprecated and will be removed in a future release. Please use `run.url` instead.
+Loading tokenizer: Qwen/Qwen3.5-4B
+Fetching 2 files: 100%|█████████████████████████████████████| 2/2 [00:00<00:00, 9425.40it/s]
+Download complete: : 0.00B [00:00, ?B/s]                              | 0/2 [00:00<?, ?it/s]
+Loading and tokenizing dataset...
+Fetching 2 files: 100%|█████████████████████████████████████| 2/2 [00:00<00:00, 7632.95it/s]
+Download complete: : 0.00B [00:00, ?B/s]                              | 0/2 [00:00<?, ?it/s]
+Fetching 2 files: 100%|█████████████████████████████████████| 2/2 [00:00<00:00, 7489.83it/s]
+Download complete: : 0.00B [00:00, ?B/s]                              | 0/2 [00:00<?, ?it/s]
+Loading weights:  68%|▋| 289/426 [00:00<00:00, 3786.74it/s, Materializing param=model.layers
+Loading weights: 100%|█| 426/426 [00:00<00:00, 3798.78it/s, Materializing param=model.norm.w
+Loading weights: 100%|█| 426/426 [00:00<00:00, 3756.46it/s, Materializing param=model.norm.w
+  Train samples: 1433, Eval samples: 181
+Loading model: Qwen/Qwen3.5-4B
+Fetching 2 files: 100%|█████████████████████████████████████| 2/2 [00:00<00:00, 8516.35it/s]
+Download complete: : 0.00B [00:00, ?B/s]                              | 0/2 [00:00<?, ?it/s]
+Loading weights: 100%|█| 426/426 [00:00<00:00, 2880.68it/s, Materializing param=model.norm.w
+trainable params: 84,934,656 || all params: 4,290,685,952 || trainable%: 1.9795
+Distribution strategy: DeepSpeed ZeRO-2
+The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'eos_token_id': 248046, 'pad_token_id': 248044}.
+Starting training...
+The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'eos_token_id': 248046, 'pad_token_id': 248044}.
+The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'eos_token_id': 248046, 'pad_token_id': 248044}.
+The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'eos_token_id': 248046, 'pad_token_id': 248044}.
+{'loss': '1.306', 'grad_norm': '1.174', 'learning_rate': '0', 'epoch': '0.002786'}
+{'loss': '1.784', 'grad_norm': '1.176', 'learning_rate': '0.0001', 'epoch': '0.005571'}
+{'eval_loss': '1.516', 'eval_runtime': '32.16', 'eval_samples_per_second': '5.628', 'eval_steps_per_second': '1.43', 'epoch': '0.005571'}
+{'loss': '1.165', 'grad_norm': '0.4867', 'learning_rate': '5e-05', 'epoch': '0.008357'}
+{'train_runtime': '111.2', 'train_samples_per_second': '0.108', 'train_steps_per_second': '0.027', 'train_loss': '1.418', 'epoch': '0.008357'}
+100%|█████████████████████████████████████████████████████████| 3/3 [01:51<00:00, 37.07s/it]
+Done. Results in /root/lab-work/experiments/013_text_summary2/train_results/005
+Saving final model...
+Done. Results in /root/lab-work/experiments/013_text_summary2/train_results/006
+Done. Results in /root/lab-work/experiments/013_text_summary2/train_results/004
+Pushing to HF Hub: su-dm/qwen3_5lora
+Processing Files (1 / 1)      : 100%|██████████████████████████|  170MB /  170MB, 34.0MB/s
+New Data Upload               : 100%|██████████████████████████|  170MB /  170MB, 34.0MB/s
+  ...adapter_model.safetensors: 100%|██████████████████████████|  170MB /  170MB
+Processing Files (1 / 1)      : 100%|██████████████████████████| 20.0MB / 20.0MB,  0.00B/s
+New Data Upload               : |                              |  0.00B /  0.00B,  0.00B/s
+  ...mpzn7c2_t2/tokenizer.json: 100%|██████████████████████████| 20.0MB / 20.0MB
+No files have been modified since last commit. Skipping to prevent empty commit.
+
+Summary written to /root/lab-work/experiments/013_text_summary2/train_results/007/summary.txt
+wandb:
+wandb: Run history:
+wandb:               eval/loss ▁
+wandb:            eval/runtime ▁
+wandb: eval/samples_per_second ▁
+wandb:   eval/steps_per_second ▁
+wandb:             train/epoch ▁▄▄██
+wandb:       train/global_step ▁▅▅██
+wandb:         train/grad_norm ██▁
+wandb:     train/learning_rate ▁█▅
+wandb:              train/loss ▃█▁
+wandb:
+wandb: Run summary:
+wandb:               eval/loss 1.51604
+wandb:            eval/runtime 32.1618
+wandb: eval/samples_per_second 5.628
+wandb:   eval/steps_per_second 1.43
+wandb:              total_flos 2655625657974784.0
+wandb:             train/epoch 0.00836
+wandb:       train/global_step 3
+wandb:         train/grad_norm 0.48669
+wandb:     train/learning_rate 5e-05
+wandb:              train/loss 1.16472
+wandb:                      +4 ...
+wandb:
+wandb: 🚀 View run train-007 at: https://wandb.ai/sudm/legal-summary/runs/1j577ey0
+wandb: ⭐️ View project at: https://wandb.ai/sudm/legal-summary
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260323_175538-1j577ey0/logs
+Done. Results in /root/lab-work/experiments/013_text_summary2/train_results/007
+
