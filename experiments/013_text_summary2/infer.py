@@ -90,6 +90,10 @@ Examples:
         help="Sampling temperature. 0 = greedy (default: 0.6)",
     )
     parser.add_argument(
+        "--max_seq_length", type=int, default=None,
+        help="Max context length in tokens. Lower = less VRAM (default: model's native length)",
+    )
+    parser.add_argument(
         "--tensor_parallel_size", type=int, default=None,
         help="Number of GPUs for tensor parallelism (default: all available)",
     )
@@ -114,6 +118,8 @@ def load_model(args, tp_size: int):
         trust_remote_code=True,
         download_dir=str(MODEL_CACHE_DIR),
     )
+    if args.max_seq_length:
+        common_kwargs["max_model_len"] = args.max_seq_length
 
     if args.checkpoint:
         checkpoint_path = args.checkpoint
