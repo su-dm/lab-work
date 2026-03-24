@@ -37,10 +37,15 @@ Examples:
   # Interactive follow-up chat after initial summary
   python infer.py --input case_filing.pdf --interactive
 
-  # LoRA checkpoint + PDF input
+  # LoRA adapter from local checkpoint + PDF input
   python infer.py \\
       --checkpoint train_results/001/checkpoints/checkpoint-400 \\
       --system_prompt prompts/legal_brief.txt \\
+      --input case_filing.pdf
+
+  # LoRA adapter from HuggingFace Hub
+  python infer.py \\
+      --checkpoint user/my-lora-adapter \\
       --input case_filing.pdf
 
   # Base model + text input + save output
@@ -54,7 +59,7 @@ Examples:
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "--checkpoint", type=str,
-        help="Path to a LoRA adapter checkpoint directory",
+        help="LoRA adapter: local checkpoint path or HuggingFace repo ID (e.g. 'user/my-lora')",
     )
     group.add_argument(
         "--model", type=str, default=DEFAULT_BASE_MODEL,
@@ -111,7 +116,9 @@ def load_model(args, tp_size: int):
     )
 
     if args.checkpoint:
-        checkpoint_path = str(Path(args.checkpoint).resolve())
+        checkpoint_path = args.checkpoint
+        if Path(checkpoint_path).exists():
+            checkpoint_path = str(Path(checkpoint_path).resolve())
         print(f"Loading base model: {base_model} (TP={tp_size})", file=sys.stderr)
         print(f"LoRA adapter: {checkpoint_path}", file=sys.stderr)
         llm = LLM(
@@ -185,7 +192,9 @@ def run_inference(args):
 
     lora_request = None
     if args.checkpoint:
-        checkpoint_path = str(Path(args.checkpoint).resolve())
+        checkpoint_path = args.checkpoint
+        if Path(checkpoint_path).exists():
+            checkpoint_path = str(Path(checkpoint_path).resolve())
         lora_request = LoRARequest("adapter", 1, checkpoint_path)
 
     conversation = build_messages(system_prompt, input_text)
