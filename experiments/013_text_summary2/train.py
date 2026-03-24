@@ -1,19 +1,23 @@
 """Config-driven multi-GPU training for legal summarization (DDP or DeepSpeed ZeRO-2).
 
+Results and checkpoints are saved in the same directory as the config file.
+For example, passing --config train_results/001_LexSumm_smoketest/config.yaml
+saves everything into train_results/001_LexSumm_smoketest/.
+
 Usage:
     # See all options
     python train.py --help
 
     # Train with a config file (multi-GPU via accelerate)
     accelerate launch --num_processes=4 --mixed_precision=bf16 \
-        train.py --config configs/default.yaml
+        train.py --config train_results/001_LexSumm_smoketest/config.yaml
 
     # Convenience launcher (auto-detects GPUs)
-    bash launch_train.sh configs/default.yaml
+    bash launch_train.sh train_results/001_LexSumm_smoketest/config.yaml
 
     # Resume an interrupted run (picks up from latest checkpoint)
     accelerate launch --num_processes=4 --mixed_precision=bf16 \
-        train.py --resume_from train_results/002
+        train.py --resume_from train_results/001_LexSumm_smoketest
 """
 
 import argparse
@@ -42,7 +46,7 @@ PROJECT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_DIR))
 
 from data import load_and_prepare
-from prompts import get_next_run_dir, load_config, load_env
+from prompts import load_config, load_env
 
 
 class GracefulShutdownCallback(TrainerCallback):
@@ -95,12 +99,11 @@ class GracefulShutdownCallback(TrainerCallback):
 
 
 def _find_latest_checkpoint(run_dir: Path) -> Path | None:
-    """Return the most recent checkpoint-NNN directory inside run_dir/checkpoints."""
-    cp_root = run_dir / "checkpoints"
-    if not cp_root.exists():
+    """Return the most recent checkpoint-NNN directory inside run_dir."""
+    if not run_dir.exists():
         return None
     candidates = sorted(
-        [d for d in cp_root.iterdir() if d.is_dir() and d.name.startswith("checkpoint-")],
+        [d for d in run_dir.iterdir() if d.is_dir() and d.name.startswith("checkpoint-")],
         key=lambda d: int(d.name.split("-")[-1]),
     )
     return candidates[-1] if candidates else None
@@ -124,21 +127,22 @@ Examples:
 
   # Resume an interrupted run (uses saved config + latest checkpoint)
   accelerate launch --num_processes=4 --mixed_precision=bf16 \\
-      train.py --resume_from train_results/002
+      train.py --resume_from train_results/001_LexSumm_smoketest
 
   # Resume from a specific checkpoint
   accelerate launch --num_processes=4 --mixed_precision=bf16 \\
-      train.py --resume_from train_results/002/checkpoints/checkpoint-400
+      train.py --resume_from train_results/001_LexSumm_smoketest/checkpoint-400
 
 Config reference:
   See configs/example_train_config.yaml for all available options
   with detailed comments explaining each parameter.
 
-Outputs:
-  train_results/NNN/config.yaml      Frozen copy of your config
-  train_results/NNN/checkpoints/     LoRA adapter checkpoints
-  train_results/NNN/summary.txt      Training metrics and metadata
-  train_results/NNN/wandb_run_id.txt WandB run ID for cross-reference
+Outputs (saved alongside the config file):
+  <run_dir>/config.yaml        Frozen copy of your config
+  <run_dir>/checkpoint-NNN/    LoRA adapter checkpoints
+  <run_dir>/final/             Final model checkpoint
+  <run_dir>/summary.txt        Training metrics and metadata
+  <run_dir>/wandb_run_id.txt   WandB run ID for cross-reference
 """,
     )
     parser.add_argument(
@@ -147,7 +151,7 @@ Outputs:
     )
     parser.add_argument(
         "--resume_from", type=str, default=None,
-        help="Resume training from a previous run directory (e.g. train_results/002) "
+        help="Resume training from a run directory (e.g. train_results/001_LexSumm_smoketest) "
              "or a specific checkpoint path. Reuses the same run directory.",
     )
     parser.add_argument(
@@ -177,8 +181,9 @@ def write_summary(
     eval_losses = [e["eval_loss"] for e in log_history if "eval_loss" in e]
 
     checkpoints = sorted(
-        [d.name for d in (run_dir / "checkpoints").iterdir() if d.is_dir()]
-    ) if (run_dir / "checkpoints").exists() else []
+        [d.name for d in run_dir.iterdir()
+         if d.is_dir() and d.name.startswith("checkpoint-")]
+    )
 
     best_eval_loss = min(eval_losses) if eval_losses else None
     best_eval_step = None
@@ -223,7 +228,7 @@ def write_summary(
     lines.append("")
     lines.append("Checkpoints saved:")
     for cp in checkpoints:
-        lines.append(f"  - checkpoints/{cp}")
+        lines.append(f"  - {cp}")
 
     if interrupted and checkpoints:
         lines.append("")
@@ -261,12 +266,12 @@ def _resolve_resume(resume_from: str) -> tuple[Path, Path, str | None]:
 
     if path.name.startswith("checkpoint-"):
         checkpoint_path = path
-        run_dir = path.parent.parent  # checkpoints/checkpoint-N -> run_dir
+        run_dir = path.parent
     else:
         run_dir = path
         checkpoint_path = _find_latest_checkpoint(run_dir)
         if checkpoint_path is None:
-            print(f"Error: no checkpoints found in {run_dir / 'checkpoints'}")
+            print(f"Error: no checkpoints found in {run_dir}")
             sys.exit(1)
 
     saved_config = run_dir / "config.yaml"
@@ -289,14 +294,14 @@ def main():
             sys.exit(1)
         config = load_config(config_path)
         run_name = f"train-{run_dir.name}-resumed"
-        checkpoint_dir = run_dir / "checkpoints"
     else:
         config = load_config(args.config)
-        run_dir = get_next_run_dir(PROJECT_DIR / "train_results")
+        run_dir = Path(args.config).resolve().parent
+        run_dir.mkdir(parents=True, exist_ok=True)
         run_name = f"train-{run_dir.name}"
-        checkpoint_dir = run_dir / "checkpoints"
-        checkpoint_dir.mkdir(exist_ok=True)
-        shutil.copy2(args.config, run_dir / "config.yaml")
+        frozen_copy = run_dir / "config.yaml"
+        if frozen_copy.resolve() != Path(args.config).resolve():
+            shutil.copy2(args.config, frozen_copy)
 
     is_main_process = int(os.environ.get("LOCAL_RANK", 0)) == 0
 
@@ -369,7 +374,7 @@ def main():
         print(f"Distribution strategy: {strategy}")
 
     training_args = TrainingArguments(
-        output_dir=str(checkpoint_dir),
+        output_dir=str(run_dir),
         per_device_train_batch_size=t_cfg["per_device_batch_size"],
         per_device_eval_batch_size=t_cfg["per_device_batch_size"],
         gradient_accumulation_steps=t_cfg["grad_accum_steps"],
@@ -429,7 +434,7 @@ def main():
         if is_main_process:
             try:
                 print("Saving final model...")
-                trainer.save_model(str(checkpoint_dir / "final"))
+                trainer.save_model(str(run_dir / "final"))
             except Exception as e:
                 print(f"Warning: final model save failed: {e}")
 

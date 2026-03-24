@@ -16,12 +16,12 @@
 #
 # Examples:
 #   Local LoRA checkpoint:
-#     checkpoint: "train_results/001/checkpoints/checkpoint-400"
+#     checkpoint: "train_results/001_LexSumm_smoketest/checkpoint-400"
 #   Final checkpoint from a training run:
-#     checkpoint: "train_results/001/checkpoints/final"
+#     checkpoint: "train_results/001_LexSumm_smoketest/final"
 #   Base model (no fine-tuning, for baseline comparison):
 #     checkpoint: "Qwen/Qwen3.5-4B"
-checkpoint: "train_results/001/checkpoints/checkpoint-400"
+checkpoint: "train_results/001_LexSumm_smoketest/checkpoint-400"
 
 # --- System Prompt ---
 # The instruction given to the model. This is what you're testing --
