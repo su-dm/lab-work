@@ -1,0 +1,75 @@
+python infer2.py --max_seq_len 131072 --input uber_v_heller.txt
+
+Input: 713711 chars, generating...
+Setting `pad_token_id` to `eos_token_id`:248044 for open-end generation.
+.
+(2) Si une ou plusieurs dispositions d’un contrat d’emploi ou d’une autre loi qui portent directement sur le même sujet que la norme d’emploi offrent un avantage supérieur à la norme d’ droit accordé par une loi ou par contrat
+(2) Si une ou plusieurs dispositions d’un la LNE définit la « norme d’emploi » comme une exigence ou une interdiction prévue par la présente loi qui s’ allique à un employeur et qui bénéficie à un employé. . .
+5 (1) Sous réserve du parag text
+[191] The ESA includes the relation
+
+assistant
+<think>
+
+</think>
+
+Here is a summary of the Supreme Court of Canada case **Uber Technologies Inc. v. Heller**, [2020] 2 S.C.R. 118.
+
+### **Case Overview**
+**Uber Technologies Inc. v. Heller** is a landmark decision regarding the enforceability of mandatory arbitration clauses in employment-related disputes. The Court addressed whether a driver could bypass a contract requiring arbitration in the Netherlands (with significant upfront costs) to pursue a claim against Uber in Ontario courts for violations of Ontario employment standards.
+
+### **Facts**
+*   **The Parties:** David Heller, an Uber driver in Toronto, and Uber Technologies Inc. (and its subsidiaries).
+*   **The Contract:** To become a driver, Heller accepted Uber's standard form services agreement. This agreement contained a mandatory arbitration clause requiring disputes to be mediated and arbitrated in Amsterdam, Netherlands, under ICC rules.
+*   **The Cost:** Initiating arbitration required an upfront administrative fee of **US$14,500**, plus legal fees. Heller earns approximately $400–$600 CAD per week; thus, the arbitration fees represented a significant portion of his annual income.
+*   **The Dispute:** Heller commenced a class action in Ontario alleging that Uber misclassified drivers as independent contractors rather than employees, violating the *Employment Standards Act, 2000* (ESA).
+*   **The Motion:** Uber sought a stay of the proceedings in favor of the Netherlands arbitration based on the contract's arbitration clause.
+
+### **Procedural History**
+1.  **Motion Judge:** Stayed the proceedings, ruling that the validity of the arbitration agreement was a matter for the arbitrator ("competence-competence" principle).
+2.  **Court of Appeal (Ontario):** Allowed Heller's appeal, setting aside the stay. The court held the arbitration clause was **unconscionable** due to the inequality of bargaining power and the prohibitive cost, and that it illegally contracted out of mandatory employment standards.
+3.  **Supreme Court of Canada:** The case was appealed to the SCC.
+
+### **The Issues**
+The Supreme Court had to determine:
+1.  Which arbitration statute applies: Ontario's *Arbitration Act, 1991* (AA) or Ontario's *International Commercial Arbitration Act, 2017* (ICAA)?
+2.  Does the arbitration clause invalidate Heller's claim to access the courts?
+3.  If the clause is invalid, should the court decide its validity or refer it to the arbitrator?
+4.  Is the clause unconscionable, or is it contrary to public policy?
+
+### **Key Holdings and Reasoning**
+
+#### **1. Applicable Law**
+*   **Held:** The *Arbitration Act, 1991* (AA) applies, not the ICAA.
+*   **Reasoning:** While the agreement is international (parties are in different countries), the dispute is fundamentally about **labor and employment**. The ICAA explicitly excludes "labour or employment disputes" from its definition of "commercial." Therefore, the domestic AA governs.
+
+#### **2. Jurisdiction: Court vs. Arbitrator**
+*   **General Rule:** Under the AA, courts generally stay proceedings and refer challenges to an arbitrator's jurisdiction to the arbitrator (*competence-competence*).
+*   **Exception:** The Court established an exception where a court may refuse to stay proceedings if there is a **real prospect** that the challenge will never be resolved by the arbitrator.
+*   **Application:** In this case, the arbitration fees ($14,500) effectively create an "insurmountable precondition" for Heller. Because Heller cannot afford the fees, the arbitrator could never rule on the merits. Thus, the court must resolve the validity of the clause itself.
+
+#### **3. Unconscionability and Public Policy**
+The majority agreed with the Court of Appeal that the clause was invalid, but they reached this conclusion primarily through the doctrine of **unconscionability**, though Judge Brown also relied heavily on **public policy**.
+
+*   **Unconscionability (Majority Opinion - J.J. Abella, Rowe, etc.):**
+    *   The Court defined unconscionability as requiring two elements:
+        1.  **Inequality of bargaining power:** Uber is a multinational corporation; Heller is a vulnerable individual with no ability to negotiate.
+        2.  **Improvidence:** The bargain must result in undue advantage or disadvantage.
+    *   **Finding:** The $14,500 fee is disproportionate to the likely claim amount and Heller's income. Furthermore, the clause effectively renders Heller's contractual rights "illusory" because he cannot access them. The majority expanded the doctrine of unconscionability to cover standard form contracts where hidden costs prevent access to justice.
+
+*   **Public Policy (Judge Brown's Dissenting Opinion on the Majority's approach, but Concurring on the result):**
+    *   Judge Brown argued that the clause is invalid not because it is unconscionable, but because it **undermines the rule of law** by denying access to a legally determined dispute resolution.
+    *   He emphasized that while arbitration is respected, it cannot be used to effectively *oust* court jurisdiction when the mechanism provided (arbitration) is inaccessible. An agreement that prevents access to justice is contrary to public policy.
+
+*   **Dissenting Opinion (Justice Côté):**
+    *   Justice Côté dissented on the outcome. She argued that the *Arbitration Act* and principles of **party autonomy** require parties to honor their agreement.
+    *   She believed the court should have granted a **conditional stay**, requiring Uber to advance the filing fees so Heller could proceed to arbitration. She felt the court should not second-guess the terms of a valid arbitration agreement based on hypothetical scenarios of inability to pay, as this creates uncertainty for commercial entities.
+
+### **Significance of the Decision**
+*   **Access to Justice:** The case establishes that mandatory arbitration agreements are not absolute. If the costs of arbitration are so high that they effectively bar a party from asserting their rights, the court will intervene.
+*   **Expanding Unconscionability:** The majority significantly broadened the application of the doctrine of unconscionability in Canadian contract law, particularly regarding standard form contracts and forum selection/arbitration clauses.
+*   **Practical Impact:** It clarifies that courts will not simply defer to an arbitrator when the arbitration process itself is structurally inaccessible to the claimant due to prohibitive fees or location.
+
+### **Outcome**
+The Supreme Court **dismissed the appeal**, upholding the Court of Appeal's decision that the arbitration clause was invalid and that Heller's claim could proceed in Ontario court. The Court awarded costs to Mr. Heller throughout the proceedings.
+

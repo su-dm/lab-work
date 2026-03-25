@@ -1,0 +1,30 @@
+python infer2.py --checkpoint "su-dm/qwen3_5lora" --max_seq_len 131072 --input uber_v_heller.txt
+
+Input: 713711 chars, generating...
+Setting `pad_token_id` to `eos_token_id`:248044 for open-end generation.
+
+. Si une ou plusieurs dispositions d’un contrat d’emploi ou d’une autre loi qui traitent directement du même objet que les normes d’emploi offrent un avantage plus grand à l’ exception, les dispositions du contrat ou de la loi s’appliquent et la norme d la norme d’emploi ne s’Loi de 219
+UBER la Loi de  droit accordé par une loi ou par contrat
+(2) If one or more provisions in an Employment contract or in another Act that directly relate to maximum working hours, maximum working days, heures maximales de travail, maximums de jours de travail,
+maximums de heures de travail,
+
+
+assistant
+<think>
+
+</think>
+
+On November 6, 2019, the Court of Appeal for Ontario decided that Uber Technologies Inc. (Uber) was not an employer of the respondent, David Heller, under Ontario’s Employment Standards Act, 2000, S.O. 2000, c. 41 (“ESA”). The Court of Appeal held that Uber’s arbitration clause was invalid because it was unconscionable. The Court determined that the arbitration clause was unconscionable because it was the product of an unfair bargain and resulted from significant inequality of bargaining power between the respondent and Uber. The Court also found the arbitration clause invalid because it contracted out of the ESA. 2019 ONCA 1.
+
+On June 26, 2020, the Supreme Court of Canada (SCC) granted leave to appeal and heard the case on June 29, 2020. The appeal was heard by Chief Justice Wagner and seven other justices. The Court of Appeal’s decision was upheld. The Court held that the arbitration agreement was unconscionable and therefore invalid. 2020 SCC 16. The Court had a large majority on the issue of whether the arbitration agreement was invalid, but a split decision on the legal principle that justified the decision. The majority found that the arbitration agreement was invalid because of the doctrine of unconscionability. The dissenting judge found that the arbitration agreement was invalid because it contravened public policy.
+
+The majority found that the arbitration agreement was unconscionable because there was an inequality of bargaining power between Uber and the respondent, and an improvident bargain. The SCC stated that the arbitration agreement was part of a standard form contract and a person in the respondent’s position could not be expected to understand that the arbitration clause imposed a $14,500 hurdle to relief. The SCC further noted that the costs of arbitration were disproportionate to the possible size of an arbitration award. The SCC also noted that the arbitration agreement was the only way the respondent could vindicate his rights under the contract, but the arbitration was out of reach for him and other drivers in his position. The respondent’s contractual rights were, as a result, illusory.
+
+The majority found that the arbitration agreement was unconscionable because it was the product of an unfair bargain and resulted from significant inequality of bargaining power between the respondent and Uber. The Court also found the arbitration clause void because it contracted out of the ESA.
+
+The majority found that the arbitration agreement was unconscionable because there was an inequality of bargaining power between Uber and the respondent, and an improvident bargain. The SCC stated that the arbitration agreement was part of a standard form contract and a person in the respondent’s position could not be expected to understand that the arbitration clause imposed a $14,500 hurdle to relief. The SCC further noted that the costs of arbitration were disproportionate to the possible size of an arbitration award. The SCC also noted that the arbitration agreement was the only way the respondent could vindicate his rights under the contract, but the arbitration was out of reach for him and other drivers in his position. The respondent’s contractual rights were, as a result, illusory.
+
+The majority found that the arbitration agreement was unconscionable because there was an inequality of bargaining power between Uber and the respondent, and an improvident bargain. The SCC stated that the arbitration agreement was part of a standard form contract and a person in the respondent’s position could not be expected to understand that the arbitration clause imposed a $14,500 hurdle to relief. The SCC further noted that the costs of arbitration were disproportionate to the possible size of an arbitration award. The SCC also noted that the arbitration agreement was the only way the respondent could vindicate his rights under the contract, but the arbitration was out of reach for him and other drivers in his position. The respondent’s contractual rights were, as a result, illusory.
+
+The majority found that the arbitration agreement was unconscionable because there was an inequality of bargaining power between Uber and the respondent, and an improvident bargain. The SCC stated that the arbitration agreement was part of a standard form contract and a person in the respondent’s position could not be expected to understand that the arbitration clause imposed a $14,500 hurdle to relief. The SCC further noted that the costs of arbitration were disproportionate to the possible size of an arbitration award. The SCC also noted that the arbitration agreement was the only way the respondent could vindicate his rights under the contract, but the arbitration was out of reach for him and other drivers in his position. The respondent’s contractual rights were, as a result, illusory.
+

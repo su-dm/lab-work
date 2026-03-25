@@ -1,0 +1,75 @@
+# =============================================================================
+# Dockerfile.train — Training environment for legal summary fine-tuning
+# =============================================================================
+# Dependencies only — clone your code at runtime.
+#
+# Base:   CUDA 13.0 + cuDNN devel on Ubuntu 24.04
+# PyTorch: cu130 wheel (latest >=2.8.0)
+#
+# Host requirements:
+#   NVIDIA driver >= 575.51.03 (CUDA 13.0 minimum)
+#   nvidia-container-toolkit installed
+# =============================================================================
+
+FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04
+
+# ---------- System packages ----------
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3 python3-pip python3-venv python3-dev \
+        git wget curl \
+        build-essential \
+        ninja-build \
+        vim \
+    && ln -sf /usr/bin/python3 /usr/bin/python \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ---------- CUDA env vars for compilation ----------
+ENV CUDA_HOME=/usr/local/cuda
+ENV PATH="${CUDA_HOME}/bin:${PATH}"
+ENV LD_LIBRARY_PATH="${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}"
+ENV MAX_JOBS=8
+
+WORKDIR /workspace
+
+# ---------- PyTorch (CUDA 13.0) ----------
+RUN pip install --no-cache-dir --break-system-packages \
+        "torch>=2.8.0" \
+        --index-url https://download.pytorch.org/whl/cu130
+
+# ---------- Qwen3.5 Gated DeltaNet kernels ----------
+# causal-conv1d compiles CUDA extensions via nvcc (requires devel image).
+# flash-linear-attention is Triton-based.
+RUN pip install --no-cache-dir --break-system-packages \
+        "causal-conv1d @ git+https://github.com/Dao-AILab/causal-conv1d" \
+    && pip install --no-cache-dir --break-system-packages \
+        "flash-linear-attention @ git+https://github.com/fla-org/flash-linear-attention"
+
+# ---------- Core training stack ----------
+RUN pip install --no-cache-dir --break-system-packages \
+        "transformers>=5.2.0,<5.3.0" \
+        "datasets>=2.14.0" \
+        "peft>=0.18.0" \
+        "accelerate>=1.0.0"
+
+# ---------- DeepSpeed (pre-build all CUDA ops) ----------
+ENV DS_BUILD_OPS=1
+RUN pip install --no-cache-dir --break-system-packages \
+        "deepspeed>=0.17.0"
+
+# ---------- Liger Kernel (nightly for Qwen3.5) ----------
+RUN pip install --no-cache-dir --break-system-packages \
+        liger-kernel-nightly
+
+# ---------- Logging, eval, utilities ----------
+RUN pip install --no-cache-dir --break-system-packages \
+        "wandb>=0.16.0" \
+        "rouge-score>=0.1.2" \
+        "bert-score>=0.3.13" \
+        "sentence-transformers>=2.2.0" \
+        "anthropic>=0.39.0" \
+        "pymupdf>=1.24.0" \
+        "pyyaml>=6.0" \
+        packaging
+
+CMD ["bash"]

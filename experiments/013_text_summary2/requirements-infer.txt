@@ -1,0 +1,17 @@
+# Lightweight inference-only deps (Transformers + PEFT, no vLLM).
+# Install: pip install -r requirements-infer.txt
+
+torch>=2.8.0
+transformers>=5.2.0,<5.3.0
+peft>=0.18.0
+accelerate>=1.0.0
+
+# Qwen3.5 DeltaNet attention kernels (REQUIRED for Gated DeltaNet layers)
+flash-linear-attention @ git+https://github.com/fla-org/flash-linear-attention
+causal-conv1d @ git+https://github.com/Dao-AILab/causal-conv1d
+
+# PDF extraction (optional — only needed for .pdf inputs)
+pymupdf>=1.24.0
+
+# Config
+pyyaml>=6.0
