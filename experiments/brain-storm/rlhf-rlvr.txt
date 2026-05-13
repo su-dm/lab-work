@@ -1,0 +1,220 @@
+╭─── Claude Code v2.1.140 ─────────────────────────────────────────────────────╮
+│                                      │ Tips for getting started              │
+│           Welcome back DJ!           │ Run /init to create a CLAUDE.md file… │
+│                                      │ ───────────────────────────────────── │
+│                ▐▛███▜▌               │ What's new                            │
+│               ▝▜█████▛▘              │ Improved Agent tool `subagent_type` … │
+│                 ▘▘ ▝▝                │ Updated agent color palette           │
+│                                      │ Fixed `/goal` silently hanging when … │
+│   Opus 4.7 · Claude Pro · DJ Mavic   │ /release-notes for more               │
+│                ~/code                │                                       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+❯ /config 
+  ⎿  Config dialog dismissed
+
+❯ /config                                                                       
+  ⎿  Set defaultPermissionMode to dontAsk
+
+❯ I'm interested in how fine-tuning with RL works, RLHF and RLVR. Is GRPO the   
+  leading algorithm still or is there a new winning favorite or what do each of 
+   those use? I want you to help me build a project that allows me to train     
+  LLMs using these methods. Say for example Qwen3.5 or 3.6 if possible, or      
+  explain why not and which models are compatible and why. Do significant       
+  research and be thorough when validating findings and using the most recent   
+  technologies. I'd like you to also document all findings and keep an up to    
+  date file documenting our process here. First let's start with you answering  
+  the already posed questions, planning a few potential approaches, and tell me 
+   what options are for using existing libraries and also how it would          
+  look/work if implemented using just Pytorch                                   
+
+● I'll research the current state of RL fine-tuning, then put together a
+  thorough plan. Let me load the tools I'll need.
+
+● Now I'll kick off parallel research on the current state of RL fine-tuning,
+  Qwen model availability, and library options.
+
+● Web Search("GRPO GSPO DAPO Dr.GRPO RL fine-tuning LLM 2026 comparison")
+  ⎿  Did 1 search in 10s
+
+● Web Search("latest Qwen model release 2026 Qwen3.5 Qwen3.6 Qwen4")
+  ⎿  Did 1 search in 8s
+
+● Web Search("RLVR reinforcement learning verifiable rewards LLM 2026
+            algorithms")
+  ⎿  Did 1 search in 8s
+
+● Web Search("TRL verl OpenRLHF unsloth GRPO 2026 comparison library")
+  ⎿  Did 1 search in 10s
+
+● Good, I have a strong base. Let me get a few more specific details — the
+  HuggingFace blog on GRPO→DAPO→GSPO, the latest TRL release, and Qwen3.6 model
+  sizes for fine-tuning.
+
+● Fetch(https://huggingface.co/blog/NormalUhr/grpo-to-dapo-and-gspo)
+  ⎿  Received 377.1KB (200 OK)
+
+● Fetch(https://llm-stats.com/blog/research/post-training-techniques-2026)
+  ⎿  Received 146.5KB (200 OK)
+
+● Fetch(https://github.com/QwenLM/Qwen3.6)
+  ⎿  Received 326.2KB (200 OK)
+
+● Web Search("TRL v1.0 release GRPO DAPO GSPO support April 2026")
+  ⎿  Did 1 search in 5s
+
+● Let me check the working directory state before deciding where to put project
+  files.
+
+  Listed 2 directories (ctrl+o to expand)
+
+● The empty rlhf folder is the natural home. Let me write the documentation
+  there and then walk you through the answer.
+
+● Write(rlhf/PROJECT_NOTES.md)
+  ⎿  Wrote 247 lines to rlhf/PROJECT_NOTES.md
+      1 # RL Fine-Tuning Project — Working Notes
+      2 
+      3 Last updated: 2026-05-13
+      4 
+      5 Living document. Sections at the top reflect current state; "Deci
+        sions" and "Open questions" track where we are in the project.
+      6 
+      7 ---
+      8 
+      9 ## 1. Glossary & landscape (as of May 2026)
+     … +353 lines (ctrl+o to expand)
+
+● Now let me record some context about the user for future sessions.
+  Listed 1 directory, wrote 3 memories (ctrl+o to expand)
+
+● Saved. Here's the synthesized answer — the full version with formulas,
+  sources, and a phased plan lives in /home/djole/code/rlhf/PROJECT_NOTES.md.
+
+  TL;DR on your three questions
+
+  RLHF = the original recipe: SFT → train a reward model on human preference
+  pairs → optimize policy with PPO + KL-to-reference. Subjective alignment,
+  expensive labels, reward-model drift.
+
+  RLVR = same idea, swap the learned reward model for a programmatic verifier
+  (math answer-check, code unit tests, proof checkers, format regex). This is
+  what produced DeepSeek-R1, Tülu 3, and the modern "reasoning model" wave. RLVR
+   is orthogonal to the algorithm — PPO, GRPO, DAPO, GSPO can all be RLVR; it's
+  a statement about reward source.
+
+  Is GRPO still the leader? It's still the default baseline but the frontier has
+   moved one step further:
+  - GRPO (DeepSeek-Math, 2024) — drop the value model, use group-relative
+  z-score advantages. Best general default.
+  - DAPO (ByteDance, early 2025) — GRPO + four patches: Clip-Higher (asymmetric
+  ε), token-level loss aggregation, dynamic sampling, overlong-reward shaping.
+  Better for long CoT.
+  - GSPO (Qwen team, 2025; used to train Qwen3) — importance ratio is
+  sequence-level, length-normalized. The right answer for MoE models and very
+  long sequences, where per-token importance sampling is too noisy.
+
+  Recent comparative work (arxiv 2512.07611) suggests on dense math reasoning,
+  GRPO/DAPO/PPO end up close, with DAPO's Clip-Higher + token-level loss being
+  the parts that actually matter. TRL v1.0's GRPOTrainer exposes all three as a
+  loss_type flag, so A/B'ing them is one line.
+
+  Other approaches worth knowing: DPO/SimPO/KTO/ORPO (closed-form, no rollout
+  loop — cheap and stable but can't generate new reasoning behaviors), RLAIF
+  (LLM-judge labels), self-play (SPIN, SPICE), agentic RL (verl-agent, NeMo
+  Gym).
+
+  On Qwen3.5 / Qwen3.6
+
+  Both exist:
+  - Qwen3.5 (Feb 2026) — flagship MoE (397B-A17B, 122B-A10B, 35B-A3B) plus a 
+  Small series at 0.8B / 2B / 4B / 9B. The Small series is the sweet spot for
+  this project.
+  - Qwen3.6 (Apr 2026) — currently 27B dense + 35B-A3B MoE, Apache-2.0; more
+  sizes "coming."
+
+  For learning + iterating, I'd start at Qwen3.5-0.8B base (full-parameter GRPO
+  on one GPU), then scale.
+
+  What's compatible: anything decoder-only with logprobs exposed in transformers
+   — Llama, Gemma, Qwen, Mistral, Phi, SmolLM, DeepSeek, etc. Incompatible:
+  encoder-only (BERT), vision-only models, anything without exposed logprobs.
+  The only model-family-specific concerns are chat template, attention impl, and
+   whether it's MoE (which steers you toward GSPO).
+
+  Approach options
+
+  Path: Pure PyTorch from scratch
+  Best for: Understanding every line
+  Tradeoff: ~150 LOC for GRPO; you own all the plumbing (KV cache, ref-model
+    memory, weight sync)
+  ────────────────────────────────────────
+  Path: TRL v1.0
+  Best for: Fast path to working GRPO/DAPO/GSPO + DPO/SFT in one stack
+  Tradeoff: Some choices baked in
+  ────────────────────────────────────────
+  Path: Unsloth
+  Best for: Max VRAM efficiency on 1-2 GPUs (~80% less VRAM, ~2x speed)
+  Tradeoff: Single-node only
+  ────────────────────────────────────────
+  Path: verl (already cloned at /home/djole/code/verl)
+  Best for: Serious research, multi-node, 200+ knobs
+  Tradeoff: Bigger learning curve
+  ────────────────────────────────────────
+  Path: OpenRLHF / NeMo-Aligner
+  Best for: Production multi-node RLHF
+  Tradeoff: Only needed if scaling
+
+  My suggested order: pure PyTorch on a tiny model first to internalize the
+  algorithm, then TRL or Unsloth for real runs, then verl if/when we need scale.
+
+  What pure-PyTorch GRPO looks like
+
+  The whole inner loop is genuinely ~150 lines. Sample G completions per prompt
+  → score with verifier → compute (r - mean)/std group-relative advantage →
+  clipped PPO-style update with KL to a frozen reference. DAPO = three small
+  patches to that loop. GSPO = replace the per-token ratio with a
+  length-normalized sequence-level one. Full skeleton with PyTorch is in Section
+   4 of PROJECT_NOTES.md.
+
+  The hard parts are not the algorithm — they're: keeping policy + frozen-ref +
+  optimizer-state in memory, fast sampling (vLLM vs .generate), tokenization
+  alignment for logprobs, and distributed training. Which is why people use
+  TRL/verl.
+
+  Open questions before we build
+
+  I want to lock these down before coding. Quick choices:
+
+● User declined to answer questions
+  ⎿  · Which path should we take for the first working version? (Pure PyTorch 
+     first, then TRL / TRL straight away / Both in parallel / verl from the 
+     start)
+     · Which model should we target for Phase 1? (Qwen3.5-0.8B base 
+     (Recommended) / Qwen3.5-2B or 4B / Qwen2.5-0.5B / SmolLM3 / Qwen3.6-27B 
+     with QLoRA)
+     · Which verifier domain do you want to target first? (Math (GSM8K / 
+     MATH-500) (Recommended) / Code (with unit tests) / Format / 
+     structured-output / Multiple — start with math, then add)
+     · What GPU are you working with? (Single consumer GPU (e.g. 3090/4090, 
+     16-24GB) / Single workstation GPU (A6000/L40/etc, ~48GB) / Single H100/H200
+      (~80GB) / Multi-GPU node or cluster)
+
+● Got it — what would you like to clarify before we pick directions? Happy to
+  expand on any of the four (build path / Phase-1 model / verifier domain /
+  hardware), explain trade-offs in more depth, or rework the questions entirely
+  if I'm framing them wrong.
+
+  Sources:
+  - From GRPO to DAPO and GSPO — HuggingFace blog
+  - Post-Training in 2026: GRPO, DAPO, RLVR & Beyond — llm-stats
+  - Comparative Analysis of PPO/GRPO/DAPO — arXiv 2512.07611
+  - RLVR Implicitly Incentivizes Correct Reasoning — arXiv 2506.14245
+  - TRL v1.0 release — MarkTechPost
+  - TRL GRPO Trainer docs
+  - verl repo
+  - Unsloth RL guide
+  - Qwen3.6 — GitHub
+  - Awesome-RLVR
+
+✻ Crunched for 1h 22m 49s

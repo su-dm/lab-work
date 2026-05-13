@@ -1,0 +1,570 @@
+╭─── Claude Code v2.1.140 ─────────────────────────────────────────────────────╮
+│                                      │ Tips for getting started              │
+│           Welcome back DJ!           │ Run /init to create a CLAUDE.md file… │
+│                                      │ ───────────────────────────────────── │
+│                ▐▛███▜▌               │ What's new                            │
+│               ▝▜█████▛▘              │ Improved Agent tool `subagent_type` … │
+│                 ▘▘ ▝▝                │ Updated agent color palette           │
+│                                      │ Fixed `/goal` silently hanging when … │
+│   Opus 4.7 · Claude Pro · DJ Mavic   │ /release-notes for more               │
+│        ~/code/gate-interrupts        │                                       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+❯ /clear                                                                        
+  ⎿  (no content)
+
+❯ This is a new project. It will require significant research and effort. The   
+  high level objective is based on a new concept for MoE LLM architectures.     
+  Currently mixture of experts includes a gating mechanism which determines     
+  which segments of the network or 'experts' should attempt to infer the prompt 
+   and from which subsets of parameters the response should be generated.       
+  There's also the concept of attention gating where the attention parameters   
+  get gated and ultimately split based on input relevance. I propose an         
+  additional new mechanism, that has the ability to counteract the LLMs high    
+  level judgement on which expert to sample an answer from. By introducing a    
+  trainable 'feedback layer' that can interrupt and adjust the gate based on    
+  critical or vital exceptionary generations from a non-primary/selected        
+  expert. Here is an example: A MoE LLM has been trained to a point where each  
+  expert or sub network has specialized in a given domain. Suppose one expert   
+  is knowledgable on food, and the user prompts for a tasty recipe for their    
+  dot. The gate selects the food expert which comes up with a berry pie recipe. 
+   However, despite the food expert being undeniably the leading expert on this 
+   topic, the other veteranarian expert subnetwork knows dogs are allergic to   
+  berries and that's not safe but it wasn't conferred with. My idea is an       
+  interrupt mechanism, which allows for broader MoE inclusion, that in the case 
+   one of the less relevant or non-primarily gated experts happens to generate  
+  logits and a response with a high statistical confidence indicating an        
+  important and critical message. Then an interrupt can be triggered to         
+  prioritize this models response. Something to that effect. There could be a   
+  trainable layer to approximate more dynamic behaviors. - Now your             
+  instructions: 1. Be extremely thorough, deligent, and critical throughout     
+  this research and development process. Consider the base theory of what is    
+  being proposed and identify gaps in information. Search the internet and      
+  research further sources to identify how to solve problems or answer          
+  questions. Plan ahead for how this larger project could be achieved and       
+  consider critical steps and questions that need to be achieved/answered to    
+  reach milestones. Carefully consider requirements and do not make             
+  assumptions, you should verify interfaces and compatibility to ensure         
+  approaches make sense and will work. 2. Look into if anyone has researched    
+  anything similar to this. Look intensively at MoE LLM architectures. Consider 
+   pytorch implementations and where this new component would be coded, how it  
+  affects training, and what test/eval requirements it introduces.  3. Reason   
+  through the feasibility of the task once you understand the relevant papers   
+  and and base foundation of what I believe makes this possible. Consider       
+  whether you think it is possible or not and explain to me your opinions,      
+  findings, and thoughts. Design an architecture plan and map of how this       
+  framework could be achieved and the components/layout/requirements involved   
+  and put forth any unknown variables or expected future testing and research   
+  required. After this you and I will discuss how to proceed                    
+
+● I'll approach this systematically: examine the working directory, research
+  existing literature on MoE architectures and related interrupt/override
+  concepts, then provide a critical analysis with feasibility assessment and an
+  architecture plan. Let me load research tools first.
+
+  Listed 1 directory (ctrl+o to expand)
+
+● Empty directory, as expected. Let me set up tracking tasks and kick off
+  parallel literature searches on the critical research questions.
+
+● Web Search("mixture of experts MoE LLM override gating non-selected expert
+            veto mechanism 2024 2025")
+  ⎿  Did 1 search in 8s
+
+● Web Search("MoE expert specialization domain semantic Mixtral analysis
+            token-level routing")
+  ⎿  Did 1 search in 9s
+
+● Web Search("speculative mixture of experts decoding cascade verification
+            safety expert")
+  ⎿  Did 1 search in 11s
+
+● Web Search("mixture of experts confidence calibration logits routing entropy
+            uncertainty")
+  ⎿  Did 1 search in 8s
+
+● Excellent — I've found directly relevant work (SAFEx on safety-critical
+  experts, Cascade for utility-driven speculative MoE, work on counterfactual
+  routing). Let me dig deeper into the most relevant papers and a few remaining
+  angles.
+
+● Web Search("SAFEx safety-critical experts MoE LLM stability expert selection
+            arxiv 2506.17368")
+  ⎿  Did 1 search in 7s
+
+● Web Search("MoE soft routing shared expert DeepSeekMoE always-on expert
+            auxiliary loss")
+  ⎿  Did 1 search in 7s
+
+● Web Search("mixture of experts dropout all experts dense backbone hybrid
+            routing training")
+  ⎿  Did 1 search in 8s
+
+● Web Search("LLM multi-agent debate verifier critic ensemble disagreement
+            safety override")
+  ⎿  Did 1 search in 10s
+
+● Fetch(https://arxiv.org/abs/2506.17368)  ⎿  Received 48.8KB (200 OK)
+
+● Fetch(https://arxiv.org/html/2605.07260)
+  ⎿  Received 359.6KB (200 OK)
+
+● Major findings:
+  - SAFEx confirms safety knowledge IS concentrated in specific experts (12/6144
+   control 22% of refusals)
+  - Counterfactual routing shows on hard tokens, the chosen expert is best in
+  <1% of cases — 20pp improvement available from re-routing alone
+  - DeepSeekMoE shared experts provides a precedent for always-on experts
+  - No prior work proposes an interrupt/veto mechanism — there's a clear gap
+
+  Let me update tracking and gather a few more critical pieces before writing
+  up.
+
+● Web Search("capsule networks dynamic routing by agreement disagreement
+            competition neural network")
+  ⎿  Did 1 search in 7s
+
+● Web Search("PyTorch Mixtral MoE implementation routing forward pass top-k
+            gating code")
+  ⎿  Did 1 search in 7s
+
+● Web Search("MoE guardrail safety expert always-on routing veto bypass override
+             2025")
+  ⎿  Did 1 search in 8s
+
+● Fetch(https://arxiv.org/html/2506.20675v1)
+  ⎿  Received 375.2KB (200 OK)
+
+● The "Steering MoE LLMs via Expert (De)Activation" paper looks critically
+  relevant. Let me fetch it plus check one more angle on training dynamics.
+
+● Fetch(https://arxiv.org/html/2509.09660v2)
+  ⎿  Received 278.3KB (200 OK)
+
+● Web Search("MoE auxiliary loss training instability collapsed routing expert
+            load balancing PyTorch implementation")
+  ⎿  Did 1 search in 8s
+
+● Web Search("interpretable MoE expert what does each expert learn probing
+            Mixtral DeepSeek")
+  ⎿  Did 1 search in 7s
+
+● I have enough to write a rigorous analysis. Let me close out research tasks
+  and finalize.
+
+● Gate-Interrupts for MoE LLMs — Critical Analysis & Architecture Plan
+
+  1. Restating the proposal, precisely
+
+  You're proposing an inference-time mechanism that lets a non-routed expert in
+  a sparse-MoE LLM override or amend the routed expert's contribution when the
+  non-routed expert produces a high-confidence signal that the input touches its
+   domain in a critical way. A trainable "feedback/interrupt" layer learns when
+  to fire.
+
+  Before evaluating, I need to nail down what is actually being claimed vs.
+  assumed, because a few of the assumptions matter for whether this is even
+  well-posed:
+
+  #: A1
+  Assumption in the proposal: Experts cleanly specialize by semantic domain
+    ("food expert", "vet expert")
+  Reality (from literature): Partially true. Mixtral/DeepSeek studies show
+    specialization is token-/syntax-level in shallow  layers, semantic/domain in
+   
+    deep layers, but never as  clean as a domain label. Many experts are
+    polysemantic; only expert paths (sequences of routing decisions across
+    layers) become quasi-monosemantic (Polysemantic Experts,  Monosemantic 
+  Paths,
+     Closer Look at MoE).
+  Impact: The food/vet metaphor doesn't map onto a single expert; it maps onto a
+
+    route across many layers. This complicates "which expert should interrupt."
+  ────────────────────────────────────────
+  #: A2
+  Assumption in the proposal: A non-selected expert's logit confidence is a
+    reliable signal of "important and critical" knowledge
+  Reality (from literature): Neural confidence is famously poorly calibrated.
+    Bayesian-MoE and gate-entropy work confirm this; the standard router is
+    well-calibrated on easy tokens  but ~useless on the hard ones where 
+    re-routing would  help most (Counterfactual Routing Analysis).
+  Impact: The very tokens where you want the interrupt to fire are the tokens
+    where the confidence signal is least trustworthy.
+  ────────────────────────────────────────
+  #: A3
+  Assumption in the proposal: Non-routed experts could produce evaluable logits
+    at inference
+  Reality (from literature): Standard sparse MoE does not run non-routed experts
+   
+    at all — that's the entire efficiency point. You must either run them
+  anyway,
+     run cheap proxies for them, or change the architecture.
+  Impact: This is the central design constraint.
+  ────────────────────────────────────────
+  #: A4
+  Assumption in the proposal: A single interrupt point can correct a wrong
+  gating
+    decision
+  Reality (from literature): Routing happens per-layer, per-token, often in
+  24-60
+     MoE layers. An "interrupt" is not a global event; it's a stack of per-layer
+
+    decisions.
+  Impact: Forces a design choice: per-layer interrupt, output-layer interrupt,
+  or
+    sequence-level interrupt. These are very different systems.
+
+  Already we see the proposal needs sharpening on three axes: where in the 
+  network the interrupt lives, what signal triggers it, and what compute it 
+  costs.
+
+  2. Prior art — does anyone do this already?
+
+  Short answer: no one does exactly this, but four families of work circle 
+  around it, and one of them (SteerMoE) is close enough that any paper here must
+   carefully position against it.
+
+  2.1 Directly adjacent
+
+  - SteerMoE (2509.09660) — Identifies behavior-linked experts offline by
+  comparing activation between paired safe/unsafe inputs, then manipulates 
+  router logits at inference (sets target experts' scores to max+ε or min-ε).
+  This is a gate override, and it improves safety +20% on red-team data and
+  faithfulness +27% on RAG. Crucially: it's static — the experts to steer are 
+  decided offline, not based on the runtime output of a non-routed expert. Your
+  proposal is the dynamic, content-conditional version.
+  - SAFEx (2506.17368) — Demonstrates that safety knowledge is localized: just
+  12 experts (of 6,144) in Qwen3-30B-A3B control 22% of refusal behavior.
+  Decomposes into HCDG (detection) and HRCG (response control) groups. This is
+  the strongest empirical validation of your premise — the "vet expert" really
+  does exist as a localized substructure, at least for safety.
+  - Counterfactual Routing Analysis (2605.07260) — The single most important
+  paper for your idea. On "fragile" hard tokens, the chosen expert is best only
+  <1% of the time, and 20.4 percentage points of next-token probability is 
+  recoverable purely by re-routing within a frozen model. So non-routed experts
+  genuinely contain better answers on hard cases. This is the empirical headroom
+   your interrupt would chase.
+
+  2.2 Related machinery
+
+  - Cascade / utility-driven speculative MoE (2506.20675) — Speculative decoding
+   adapted to MoE; introduces "utility" gating between draft and verify. Not a
+  non-routed-expert override, but shows that runtime arbitration between
+  cheaper/coarser and expensive paths is tractable in MoE serving.
+  - DeepSeekMoE shared experts — DeepSeek-V3 has 2 shared experts that always 
+  run alongside 6 top-k routed experts (of 64). This is the precedent for "an
+  expert that bypasses gating." Your interrupt expert can be implemented as a
+  conditionally-loud shared expert.
+  - Capsule networks / routing-by-agreement (Sabour et al., 2017) — Conceptual
+  ancestor. Lower-level capsules vote for higher-level ones based on agreement;
+  competition between capsules is the routing signal. Different domain, but the
+  "non-elected unit can become dominant via signal strength" idea is the same
+  skeleton.
+  - Multi-agent debate / verifier-critic — Inference-time, prompt-level analog
+  of what you want, but with whole-model agents rather than sub-experts. Shows
+  the governance problem you'll inherit: clones converge to groupthink,
+  structured rewriting attacks can amplify bad outputs by up to 180%
+  (Multi-Agent Debate).
+
+  2.3 Adversarial context you can't ignore
+
+  A new gate signal is a new attack surface. GateBreaker (2512.21008) and the
+  MoE Routing Safety Bypass database entry already show that fine-tuning can
+  create "alignment shortcuts" through routing manipulation. Any interrupt
+  mechanism introduces a new learnable component that can be poisoned to
+  suppress interrupts on adversarial inputs. This must be part of the threat
+  model from day one.
+
+  Net of prior art: the premise (non-routed experts know things) is now
+  empirically established. The mechanism you propose (dynamic,
+  content-conditional interrupt) is a real open problem. SteerMoE is your
+  closest neighbor; the contribution would be making it dynamic.
+
+  3. Feasibility — my honest assessment
+
+  Conditional yes, but probably not in the form you described. Three hard
+  problems and one mostly-solved problem:
+
+  3.1 The compute paradox (hard, but solvable)
+
+  You cannot get logits from a non-routed expert without computing it. Three
+  viable architectural responses, each with trade-offs:
+
+  1. Always-on probe heads. Add a tiny (e.g., 1-2 layer MLP, < 1% expert params)
+   "summary head" per expert that always runs on the input. The summary head
+  outputs a low-dimensional vector + a scalar "this is in my critical
+  wheelhouse" score. Cheap, but its faithfulness to the full expert's actual
+  output is questionable — you're trusting a 1% surrogate to flag when the 100%
+  expert would disagree.
+  2. Speculative two-pass. Run the routed forward pass to produce a draft. In a
+  separate cheap pass, evaluate the input against each expert's "domain
+  detector" head (à la SAFEx's HCDG concept). If any non-routed expert flags
+  critical relevance + a divergence from the draft → run the full non-routed
+  expert and arbitrate. Trades latency for accuracy.
+  3. Shared "critical-knowledge" experts. A small number of always-on experts
+  trained specifically to carry safety-critical, factuality-critical, and 
+  domain-critical knowledge that should never be silenced by routing. Borrowed
+  from DeepSeek-V3. This is the safest, simplest version of your idea — and
+  probably the strongest first paper.
+
+  Of these, (3) is the lowest-risk way to deliver a publishable, useful version 
+  of your idea in 2026, and (2) is the "true to the original vision" path. (1)
+  is appealing but its faithfulness becomes an empirical question that may sink
+  the whole architecture.
+
+  3.2 The confidence signal is unreliable where you need it most (hard)
+
+  The counterfactual routing paper is brutally specific: confidence is
+  well-calibrated on easy tokens, where you don't need re-routing, and
+  uninformative on fragile tokens, where you do. So raw logit margin / softmax 
+  confidence is not a safe interrupt trigger in its naive form.
+
+  Workable substitutes:
+  - Trained interrupt classifier on (input, draft-output) pairs. Treat "should
+  we interrupt?" as a learned binary classification problem with paired data
+  showing critical interventions vs. spurious ones. This is closer to what you
+  originally proposed and is the right framing.
+  - Cross-expert disagreement (capsule-network style): interrupt when a
+  non-routed expert's draft differs sharply from the routed one AND the
+  non-routed expert has been trained to "claim ownership" of this token type.
+  Requires training signal for ownership.
+  - Calibrated uncertainty via Bayesian-MoE-style heads (2511.08968) for the
+  interrupt scorer specifically.
+
+  3.3 Training dynamics (very hard, biggest research risk)
+
+  MoE training is already fragile: load-balancing aux loss conflicts with the LM
+   objective, leading models like DeepSeek-V3 to drop aux loss entirely in favor
+   of bias-based load balancing (2408.15664). Adding a third competing objective
+   ("learn when to interrupt") creates:
+  - Reward-hacking risk: the interrupt scorer can learn to fire constantly (free
+   gradient on whichever expert it activates), or never (collapse to identity).
+  You will need calibration loss + sparsity loss + safety-critical recall loss,
+  each fighting the others.
+  - Specialization disruption: if interrupts fire during training, routed
+  experts get less signal on the tokens that were "interrupted away,"
+  potentially weakening their own specialization. You may need a frozen-base, 
+  interrupt-only fine-tune phase — similar to how SteerMoE never modifies expert
+   weights.
+  - No supervised data exists. You need a benchmark of (prompt, routed-answer, 
+  critical-correction, ground-truth-which-expert-owned-the-correction). This
+  dataset doesn't exist. Building it (synthetic + curated) is a multi-month
+  sub-project on its own.
+
+  3.4 Adversarial robustness (medium)
+
+  Once you ship a trainable interrupt, the GateBreaker-style attack surface
+  widens. Any new training objective that gates safety-critical behavior is a
+  new fine-tuning bypass vector. Acceptable, but must be in the threat model and
+   tested against existing MoE jailbreak benchmarks.
+
+  Verdict
+
+  Feasible as a research direction; not feasible as a drop-in retrofit to 
+  existing Mixtral/DeepSeek checkpoints without significant retraining. A v1
+  that proves the concept on a small, trained-from-scratch MoE (~1-2B active
+  parameters) is realistic in a 3-6 month research cycle. A claim of beating
+  Mixtral 8x22B / DeepSeek-V3-class models on safety+factuality benchmarks is a
+  12-18 month effort.
+
+  4. Proposed architecture (concrete)
+
+  I'd recommend starting with a hybrid of approaches (2) and (3) above — they're
+   complementary and let you ablate cleanly.
+
+  4.1 Components
+
+                  ┌──────────────────────────────────────┐
+     input  ───►  │  Standard transformer block          │
+                  │  ┌──────────┐                        │
+                  │  │  Router  │ (unchanged top-k)      │
+                  │  └────┬─────┘                        │
+                  │       │                              │
+                  │  ┌────▼──────────────────────────┐   │
+                  │  │  Routed experts (k of N)      │   │
+                  │  └────┬──────────────────────────┘   │
+                  │       │                              │
+                  │  ┌────▼──────────────────────────┐   │
+                  │  │  Critical-Knowledge Experts   │   │ ← always-on, few
+  (1-3)
+                  │  │  (always run, cheap)          │   │
+  safety/medical/legal/etc.
+                  │  └────┬──────────────────────────┘   │
+                  │       │                              │
+                  │  ┌────▼──────────────────────────┐   │
+                  │  │  Domain Probe Heads (per N)   │   │ ← tiny, always-on,
+                  │  │  emit (relevance, divergence) │   │   produced from input
+                  │  └────┬──────────────────────────┘   │
+                  │       │                              │
+                  │  ┌────▼──────────────────────────┐   │
+                  │  │  Interrupt Scorer (trainable) │   │ ← reads probes +
+                  │  │  emits interrupt_gate ∈ [0,1] │   │   draft hidden state
+                  │  └────┬──────────────────────────┘   │
+                  │       │                              │
+                  │  ┌────▼──────────────────────────┐   │
+                  │  │  Mixer:                       │   │
+                  │  │   h = (1-α)·routed +          │   │   α = interrupt_gate
+                  │  │       α·critical              │   │
+                  │  └───────────────────────────────┘   │
+                  └──────────────────────────────────────┘
+
+  The key trainable additions are: the per-expert probe heads (small MLPs), the
+  critical-knowledge expert(s) (full expert size), and the interrupt scorer (a
+  small attention/MLP over probe outputs).
+
+  4.2 Where it lives in PyTorch
+
+  Concretely, this is a modification of MixtralSparseMoeBlock (or DeepSeek's MoE
+   block). The cleanest implementation path:
+  - Fork HuggingFace transformers/models/mixtral/modeling_mixtral.py for the
+  reference architecture, or use torchtune's MoE module (RFC #1902). Mixtral
+  block is ~80 LOC; modification is ~150-200 LOC.
+  - Build on top of megablocks for efficient sparse compute if you want training
+   scale, but for v0 stay with the simple loop implementation — it's debuggable.
+  - Custom layer order: probe heads run in parallel with expert dispatch;
+  interrupt scorer must run after router so it sees the routed output to compute
+   divergence.
+
+  4.3 Training regime (3-phase)
+
+  1. Phase 1: Base MoE pretrain (or use existing checkpoint). Standard MoE
+  training, no interrupt mechanism. For research v0, train a small (~500M
+  active, 8 experts) MoE from scratch on a curated corpus where you control
+  domain mix. (Mixtral-class checkpoints are too expensive to retrain.)
+  2. Phase 2: Critical-expert fine-tune. Freeze backbone, train the always-on
+  critical-knowledge experts on a safety+factuality dataset. This isolates "what
+   knowledge must never be missed."
+  3. Phase 3: Interrupt scorer training. Freeze everything else. Train the probe
+   heads + interrupt scorer on paired data: (prompt, routed-only-output, 
+  critical-corrected-output). Objective: interrupt scorer outputs α≈1 when
+  correction is needed, α≈0 otherwise. Add calibration loss + sparsity prior
+  (interrupts should be rare).
+
+  4.4 Evaluation
+
+  - Headroom benchmark. Construct or adapt a benchmark where the gold answer
+  requires knowledge that's localized to a non-routed expert (the "dog + berry
+  pie" type case). Measure recovery rate vs. baseline.
+  - No-regression suite. Standard MoE benchmarks (MMLU, GSM8K, HumanEval) should
+   not drop. This is the load-bearing eval — if interrupts cause regressions on
+  non-critical tokens, the system fails its bar.
+  - Safety benchmark. Re-run SAFEx-style probes; HarmBench; AdvBench. Show
+  interrupts catch refusal-bypass cases routed-experts miss.
+  - Adversarial. GateBreaker / SteerMoE-unsafe steering. Show your interrupt
+  mechanism is robust to routing-bypass attacks.
+  - Calibration. ECE for the interrupt scorer; how often it fires vs. how often
+  it should fire.
+
+  5. Unknowns / open questions you'll have to resolve
+
+  These are the things I cannot resolve from literature alone — they need
+  experiments:
+
+  1. How faithful are probe heads to full-expert behavior? Unknown. May need to
+  compare probe-head verdict to full-expert forward on a calibration set.
+  2. Does adding always-on critical experts change overall expert 
+  specialization? The shared experts in DeepSeek absorb "universal" patterns;
+  adding specialized shared experts may distort other experts' specialization.
+  Open empirical question.
+  3. Per-layer vs. terminal interrupt? I sketched per-layer. A terminal-only
+  interrupt (act once at the unembedding) is much simpler but loses the
+  depth-wise correction signal. Worth ablating.
+  4. What's the right granularity for interrupt firing — per-token, per-span, 
+  per-response? Per-token is the natural MoE granularity but may produce
+  flickery outputs. Per-response requires a different control surface.
+  5. Is the dataset of "critical interventions" buildable at sufficient scale?
+  This may be the dataset-engineering blocker.
+  6. Does this work without retraining experts? Strong if yes (you can retrofit
+  existing models). SteerMoE shows static steering works without retraining;
+  your dynamic version probably needs at least the probe heads trained.
+
+  6. Where I think this should go
+
+  If I were writing the research proposal, I'd structure it in two milestones
+  with a decision gate between them:
+
+  Milestone 1 (3 months): "Static critical experts as a retrofit."
+  Take an open Mixtral / DeepSeek-MoE checkpoint, freeze it, add 1-2 always-on
+  critical experts trained via LoRA on a safety+factuality corpus, and a fixed
+  (non-trainable) interrupt rule based on probe-head outputs. Show measurable
+  improvement on a constructed "non-routed-expert knows better" benchmark with
+  no regression on MMLU. This is publishable on its own and de-risks the harder 
+  problem.
+
+  Decision gate: Did probe heads turn out to faithfully predict full-expert
+  disagreement? If yes → proceed. If no → either rethink the trigger, or fall
+  back to "static critical experts always mix in at fixed weight."
+
+  Milestone 2 (6 months): "Trained dynamic interrupt scorer."
+  Build the paired-correction dataset. Train the interrupt scorer end-to-end
+  with calibration + sparsity + safety-recall losses. Compare against static
+  baseline. This is the contribution.
+
+  ---
+  My opinion, summarized
+
+  The proposal is theoretically sound, partially empirically supported, and 
+  architecturally non-trivial but tractable. The strongest version is not
+  "interrupts override the gate based on logit confidence" (the confidence
+  signal is weakest where you need it most), but rather "a learned, calibrated 
+  arbiter decides when always-on critical-knowledge experts should partially 
+  override the routed mixture, based on input-conditioned probes and 
+  routed-output divergence." Framed that way, it has a clear publishable
+  contribution against SteerMoE (dynamic vs. static), a clear connection to
+  SAFEx (operationalizes their finding), and concrete experimental headroom (the
+   20pp recoverable on fragile tokens from counterfactual routing).
+
+  The biggest single risk is dataset construction for training the interrupt
+  scorer. The biggest single technical risk is probe-head faithfulness. Either
+  of those failing turns this into "an interesting negative result" rather than
+  "a new architecture."
+
+  ---
+  Where I'd like your input before we proceed:
+
+  1. Scope of "critical". Is your interest primarily safety-critical (the
+  dog/berry example) or also factuality-critical / expertise-critical more
+  broadly? This changes which papers we benchmark against and which datasets we
+  build.
+  2. Compute budget. Are we doing this on a small from-scratch MoE (single-GPU
+  feasible, ~500M active params), or trying to retrofit an existing open MoE
+  (Mixtral 8x7B / DeepSeek-MoE-16B; needs a multi-GPU box)? The architecture I
+  sketched works for either, but the experiments differ.
+  3. Static-first or dynamic-first. Are you OK starting with Milestone 1 (static
+   critical experts) and earning the right to do dynamic, or do you want to go
+  straight at the dynamic interrupt scorer?
+  4. Prior commitment to "logit confidence as trigger". If you have a strong
+  intuition that raw logit confidence should work as the trigger and the
+  calibration results in the literature are wrong, I'd rather know — because
+  that means the first experiment to run is a calibration probe specifically on
+  your hypothesis.
+
+  I haven't written any code or files yet; this is research framing only. Once
+  we align on the four questions above, the natural next step is a v0 PyTorch
+  scaffold of the modified MoE block plus a sanity test on a toy MoE, before any
+   data-engineering effort begins.
+
+  Sources
+
+  - SAFEx: Analyzing Vulnerabilities of MoE-Based LLMs via Stable 
+  Safety-critical Expert Identification
+  - Steering MoE LLMs via Expert (De)Activation (SteerMoE)
+  - When Are Experts Misrouted? Counterfactual Routing Analysis
+  - Utility-Driven Speculative Decoding for Mixture-of-Experts (Cascade)
+  - Mixtral of Experts
+  - Auxiliary-Loss-Free Load Balancing Strategy for Mixture-of-Experts 
+  (DeepSeek)
+  - Polysemantic Experts, Monosemantic Paths
+  - A Closer Look into Mixture-of-Experts in Large Language Models
+  - Bayesian Mixture of Experts for Large Language Models
+  - Defending MoE LLMs against Harmful Fine-Tuning via Safety Routing Alignment
+  - GateBreaker: Gate-Guided Attacks on Mixture-of-Expert LLMs
+  - Dynamic Routing Between Capsules (Sabour, Frosst, Hinton 2017)
+  - Mixture of Experts in Large Language Models — 2025 survey
+  - MoE Routing Safety Bypass — LLM Security DB
+  - torchtune MoE RFC #1902
+
+✻ Churned for 11h 29m 6s
+
+❯ /config 
+  ⎿  Config dialog dismissed
